@@ -1,0 +1,453 @@
+#' Render a list of Rd block-level children as multi-paragraph Markdown
+#'
+#' This is "Tier 3" of pkgmd's text extraction (see [.rd_to_text()] for
+#' Tier 2 and [.rd_to_raw_text()] for Tier 1): unlike those, which produce
+#' single-line-safe text, `.rd_to_block_md()` walks Rd content and produces
+#' real multi-line Markdown — paragraphs, bullet/numbered lists, nested
+#' subsection headings, and fenced code blocks — instead of flattening
+#' everything to a single run of prose. Use it for `\\description{}` and
+#' `\\details{}`, which commonly contain `\\itemize{}`, `\\enumerate{}`,
+#' `\\subsection{}{}`, and `\\preformatted{}`.
+#'
+#' `rd` is expected to already be a plain list of block-level children
+#' (e.g. from [.first_rd_tag_children()] or, for a `\\subsection{}{}`
+#' body, `subsection_node[[2]]` directly) — not wrapped in an outer
+#' singleton list the way [.get_rd_tag()] returns matches.
+#'
+#' @param rd A list of Rd fragments.
+#' @param heading_level Heading depth for any `\\subsection{}{}` found at
+#'   this level (e.g. `3` renders `### Title`). Nested subsections
+#'   increase this by 1 per level.
+#' @return A single Markdown string with blank lines between block
+#'   segments.
+#' @keywords internal
+.rd_to_block_md <- function(rd, heading_level = 3) {
+  if (is.null(rd) || length(rd) == 0) {
+    return("")
+  }
+
+  segments <- list()
+  buffer <- list()
+
+  flush_buffer <- function() {
+    if (length(buffer) == 0) {
+      return(invisible(NULL))
+    }
+    text <- .normalize_block_whitespace(.rd_to_text(buffer))
+    if (nzchar(text)) {
+      segments[[length(segments) + 1]] <<- text
+    }
+    buffer <<- list()
+  }
+
+  for (child in rd) {
+    tag <- attr(child, "Rd_tag")
+    html_block <- .if_out_html_block(child)
+    if (!is.null(html_block)) {
+      # \if{html}{\out{<div class="sourceCode r">...}}: a real code block
+      # authored as an HTML passthrough (the roxygen2/pkgdown markdown
+      # fenced-code pattern), not inline text - handled before the
+      # tag-name dispatch below since it's tagged "\\if", same as a
+      # plain conditional (handled inline, see .rd_inline_piece()).
+      flush_buffer()
+      segments[[length(segments) + 1]] <- html_block
+    } else if (identical(tag, "\\itemize")) {
+      flush_buffer()
+      segments[[length(segments) + 1]] <- .render_rd_itemize(child)
+    } else if (identical(tag, "\\enumerate")) {
+      flush_buffer()
+      segments[[length(segments) + 1]] <- .render_rd_enumerate(child)
+    } else if (identical(tag, "\\describe")) {
+      flush_buffer()
+      segments[[length(segments) + 1]] <- .render_rd_describe(child)
+    } else if (identical(tag, "\\subsection")) {
+      flush_buffer()
+      segments[[length(segments) + 1]] <- .render_rd_subsection(child, heading_level)
+    } else if (identical(tag, "\\preformatted")) {
+      flush_buffer()
+      segments[[length(segments) + 1]] <- .render_rd_preformatted(child)
+    } else if (identical(tag, "\\tabular")) {
+      flush_buffer()
+      segments[[length(segments) + 1]] <- .render_rd_tabular(child)
+    } else {
+      buffer[[length(buffer) + 1]] <- child
+    }
+  }
+  flush_buffer()
+
+  paste(segments, collapse = "\n\n")
+}
+
+#' Collapse a block of prose to paragraphs, preserving paragraph breaks
+#'
+#' Rd source hard-wraps prose at some column width for source readability
+#' (see [.collapse_whitespace()] for the single-line equivalent used in
+#' table cells) - those line breaks aren't semantically meaningful and are
+#' joined back into flowing text. A blank line in the source (2+
+#' consecutive newlines), however, *is* a meaningful paragraph break and is
+#' preserved as exactly one blank line.
+#'
+#' @param text A string, typically already passed through [.rd_to_text()].
+#' @return `text` with hard-wrapped single newlines joined into spaces and
+#'   paragraph breaks normalized to a single blank line, trimmed.
+#' @keywords internal
+.normalize_block_whitespace <- function(text) {
+  text <- gsub("\r\n", "\n", text)
+  text <- gsub("\n[ \t]*\n([ \t]*\n)*", "\n\n", text)
+  text <- gsub("(?<!\n)\n(?!\n)", " ", text, perl = TRUE)
+  trimws(text)
+}
+
+#' Split the children of an `\\itemize{}`/`\\enumerate{}` node into items
+#'
+#' Unlike `\\arguments{}`'s `\\item{name}{description}` (a proper 2-child
+#' container), `\\itemize{}`/`\\enumerate{}`'s `\\item` is a bare marker
+#' with no children of its own — an item's actual content is its
+#' *following sibling nodes*, up to the next `\\item` marker (or the end
+#' of the list). Content before the first `\\item` (leading whitespace) is
+#' discarded.
+#'
+#' @param children The children of an `\\itemize{}`/`\\enumerate{}` node.
+#' @return A list of items, each itself a list of Rd fragments.
+#' @keywords internal
+.split_rd_items <- function(children) {
+  items <- list()
+  current <- list()
+  seen_item <- FALSE
+
+  for (child in children) {
+    if (identical(attr(child, "Rd_tag"), "\\item")) {
+      if (seen_item) {
+        items[[length(items) + 1]] <- current
+      }
+      current <- list()
+      seen_item <- TRUE
+    } else if (seen_item) {
+      current[[length(current) + 1]] <- child
+    }
+  }
+  if (seen_item) {
+    items[[length(items) + 1]] <- current
+  }
+
+  items
+}
+
+#' Render an `\\itemize{}` node as a Markdown bullet list
+#'
+#' Each item is collapsed to a single line via [.collapse_whitespace()],
+#' same as a table cell. Rd source hard-wraps item text across lines for
+#' readability; left as raw newlines, a continuation line isn't reliably
+#' recognized as part of the same list item across Markdown renderers (and
+#' can be actively misread as a new block - a line that happens to start
+#' with a digit and `. `, or contains something like `<table>`, is
+#' ambiguous or gets parsed as literal HTML). GitHub/Gitea compatibility
+#' requires each bullet to be self-contained on one line.
+#'
+#' @param x An `\\itemize{}` Rd node.
+#' @return A Markdown string, one `- item` line per item.
+#' @keywords internal
+.render_rd_itemize <- function(x) {
+  items <- .split_rd_items(x)
+  lines <- purrr::map_chr(items, \(item) paste0("- ", .collapse_whitespace(.rd_to_text(item))))
+  paste(lines, collapse = "\n")
+}
+
+#' Render an `\\enumerate{}` node as a Markdown numbered list
+#'
+#' Each item is collapsed to a single line - see [.render_rd_itemize()]
+#' for why.
+#'
+#' @param x An `\\enumerate{}` Rd node.
+#' @return A Markdown string, one `N. item` line per item.
+#' @keywords internal
+.render_rd_enumerate <- function(x) {
+  items <- .split_rd_items(x)
+  lines <- purrr::imap_chr(items, \(item, i) {
+    paste0(i, ". ", .collapse_whitespace(.rd_to_text(item)))
+  })
+  paste(lines, collapse = "\n")
+}
+
+#' Render a `\\describe{}` node as a Markdown definition-style bullet list
+#'
+#' Unlike `\\itemize{}`/`\\enumerate{}`, whose `\\item` is a bare marker,
+#' `\\describe{}`'s `\\item{term}{description}` is a proper 2-child
+#' container - the same shape as `\\arguments{}`'s `\\item{name}{desc}`.
+#' Markdown has no widely-supported definition-list syntax on GitHub/Gitea,
+#' so each entry is rendered as `- **term**: description`.
+#'
+#' @param x A `\\describe{}` Rd node.
+#' @return A Markdown string, one `- **term**: description` line per item.
+#' @keywords internal
+.render_rd_describe <- function(x) {
+  items <- purrr::keep(x, \(child) identical(attr(child, "Rd_tag"), "\\item"))
+  lines <- purrr::map_chr(items, \(item) {
+    if (length(item) < 2) {
+      return(paste0("- **", .collapse_whitespace(.rd_to_text(item)), "**"))
+    }
+    term <- .collapse_whitespace(.rd_to_text(item[[1]]))
+    desc <- .collapse_whitespace(.rd_to_text(item[[2]]))
+    paste0("- **", term, "**: ", desc)
+  })
+  paste(lines, collapse = "\n")
+}
+
+#' Render a `\\subsection{title}{body}` node as a Markdown heading + body
+#'
+#' The title is collapsed to a single line via [.collapse_whitespace()] -
+#' an ATX heading (`### Title`) can't contain a literal newline either.
+#'
+#' @param x A `\\subsection{}{}` Rd node (2 children: title, body).
+#' @param heading_level Heading depth for this subsection's own title.
+#' @return A Markdown string: the heading, a blank line, then the
+#'   recursively rendered body (nested subsections increase
+#'   `heading_level` by 1).
+#' @keywords internal
+.render_rd_subsection <- function(x, heading_level) {
+  title <- .collapse_whitespace(.rd_to_text(x[[1]]))
+  heading <- paste0(strrep("#", heading_level), " ", title)
+  body <- .rd_to_block_md(x[[2]], heading_level = heading_level + 1)
+  paste(c(heading, body), collapse = "\n\n")
+}
+
+#' Render a `\\preformatted{}` node as a fenced Markdown code block
+#'
+#' Uses [.rd_to_raw_text()] (Tier 1) rather than [.rd_to_text()], since
+#' preformatted content's exact spacing/indentation must be preserved
+#' verbatim. No language tag is added to the fence, since preformatted
+#' content isn't necessarily R code.
+#'
+#' @param x A `\\preformatted{}` Rd node.
+#' @return A fenced (` ``` `) Markdown code block.
+#' @keywords internal
+.render_rd_preformatted <- function(x) {
+  code <- trimws(.rd_to_raw_text(x))
+  fence <- .code_fence(code)
+  paste0(fence, "\n", code, "\n", fence)
+}
+
+#' Detect a block-level `\\if{html}{\\out{...}}` HTML code block, if `x` is one
+#'
+#' `\\if{html}{...}` / `\\ifelse{html}{...}{...}` are usually simple inline
+#' conditionals (handled by [.rd_inline_piece()]), but roxygen2's Markdown
+#' support compiles fenced code blocks (` ```r `) into
+#' `\\if{html}{\\out{<div class="sourceCode r">...}}` - a real multi-line
+#' code block authored as raw HTML passthrough, which needs block-level
+#' handling (a fenced Markdown code block), not inline text. This detects
+#' that specific shape: an `\\if`/`\\ifelse` node whose `html`-condition
+#' branch has an `\\out{}` node as a direct child.
+#'
+#' @param x An Rd node (only `\\if`/`\\ifelse`-tagged nodes can match).
+#' @return The rendered fenced code block (a string), or `NULL` if `x`
+#'   isn't this specific shape (the caller should treat it as ordinary
+#'   inline/other content instead).
+#' @keywords internal
+.if_out_html_block <- function(x) {
+  tag <- attr(x, "Rd_tag")
+
+  html_branch <- NULL
+  if (identical(tag, "\\if") && length(x) == 2) {
+    if (identical(.collapse_whitespace(.rd_to_text(x[[1]])), "html")) {
+      html_branch <- x[[2]]
+    }
+  } else if (identical(tag, "\\ifelse") && length(x) == 3) {
+    if (identical(.collapse_whitespace(.rd_to_text(x[[1]])), "html")) {
+      html_branch <- x[[2]]
+    }
+  }
+  if (is.null(html_branch)) {
+    return(NULL)
+  }
+
+  out_node <- Filter(\(ch) identical(attr(ch, "Rd_tag"), "\\out"), html_branch)
+  if (length(out_node) == 0) {
+    return(NULL)
+  }
+
+  .render_rd_out_as_code(out_node[[1]])
+}
+
+#' Render an `\\out{}` node's raw HTML as a fenced Markdown code block
+#'
+#' Strips HTML tags and decodes common entities rather than attempting to
+#' actually parse the HTML - good enough to turn e.g.
+#' `<div class="sourceCode r">mutate(x) #&gt; result</div>` into readable
+#' ```` ```r
+#' mutate(x) #> result
+#' ``` ```` , not pixel-perfect HTML rendering (which Markdown can't do
+#' anyway).
+#'
+#' roxygen2's Markdown fenced-code support compiles a single fenced block
+#' into *three* separate top-level nodes: an opening
+#' `\\if{html}{\\out{<div class="sourceCode r">}}`, the actual code as a
+#' plain `\\preformatted{}` (portable across all output formats, already
+#' handled by [.render_rd_preformatted()]), and a closing
+#' `\\if{html}{\\out{</div>}}`. The opening/closing wrapper nodes have no
+#' real content once their tags are stripped - returning `NULL` instead of
+#' an empty fence for those lets the caller skip them entirely rather than
+#' emitting spurious empty ` ``` ` blocks around the real one.
+#'
+#' @param out_node An `\\out{}` Rd node.
+#' @return A fenced Markdown code block, or `NULL` if it has no content
+#'   once HTML tags are stripped (a pure wrapper tag, not real code).
+#' @keywords internal
+.render_rd_out_as_code <- function(out_node) {
+  raw_html <- .rd_to_raw_text(out_node)
+  lang <- .detect_source_code_lang(raw_html) %||% ""
+  code <- .strip_html_tags(raw_html)
+  code <- .decode_html_entities(code)
+  code <- trimws(code)
+  if (!nzchar(code)) {
+    return(NULL)
+  }
+  fence <- .code_fence(code)
+  paste0(fence, lang, "\n", code, "\n", fence)
+}
+
+#' Detect a `class="sourceCode <lang>"` marker in raw HTML, if present
+#' @param html Raw HTML string.
+#' @return The language string (e.g. `"r"`), or `NULL` if not found.
+#' @keywords internal
+.detect_source_code_lang <- function(html) {
+  match <- regmatches(html, regexec('class="sourceCode\\s+([a-zA-Z0-9_+-]+)"', html, perl = TRUE))[[1]]
+  if (length(match) < 2) {
+    return(NULL)
+  }
+  match[2]
+}
+
+#' Strip HTML tags from a string
+#' @param html Raw HTML string.
+#' @return `html` with every `<...>` tag removed.
+#' @keywords internal
+.strip_html_tags <- function(html) {
+  gsub("<[^>]*>", "", html)
+}
+
+#' Decode the handful of HTML entities that show up in Rd `\\out{}` blocks
+#'
+#' Not a general HTML-entity decoder - just the small set that appears in
+#' practice (roxygen2/pandoc-generated `#&gt;` output markers and escaped
+#' quotes/ampersands). `&amp;` is decoded last so a literal `&amp;lt;` in
+#' the source doesn't get double-decoded into `<`.
+#'
+#' @param text A string.
+#' @return `text` with entities decoded.
+#' @keywords internal
+.decode_html_entities <- function(text) {
+  text <- gsub("&lt;", "<", text, fixed = TRUE)
+  text <- gsub("&gt;", ">", text, fixed = TRUE)
+  text <- gsub("&quot;", "\"", text, fixed = TRUE)
+  text <- gsub("&#39;", "'", text, fixed = TRUE)
+  text <- gsub("&apos;", "'", text, fixed = TRUE)
+  text <- gsub("&amp;", "&", text, fixed = TRUE)
+  text
+}
+
+#' Split the children of a `\\tabular{}{}` node's body into rows
+#'
+#' Like [.split_rd_items()] for `\\itemize{}`, `\\cr` is a bare row-separator
+#' marker (0 children of its own) rather than a container. Unlike
+#' `\\item`, content *before* the first `\\cr` is significant (it's the
+#' first row's content, not discardable leading whitespace) - `\\tabular{}`
+#' has no separate per-row start marker the way `\\itemize{}`'s `\\item`
+#' doubles as both.
+#'
+#' @param children The children of a `\\tabular{}{}` node's body (its
+#'   second argument).
+#' @return A list of rows, each itself a list of Rd fragments (to be
+#'   further split into cells by [.split_rd_table_cells()]).
+#' @keywords internal
+.split_rd_table_rows <- function(children) {
+  rows <- list()
+  current <- list()
+  for (child in children) {
+    if (identical(attr(child, "Rd_tag"), "\\cr")) {
+      rows[[length(rows) + 1]] <- current
+      current <- list()
+    } else {
+      current[[length(current) + 1]] <- child
+    }
+  }
+  rows[[length(rows) + 1]] <- current
+  rows
+}
+
+#' Split one table row's children into cells
+#' @param row_children One row from [.split_rd_table_rows()].
+#' @return A list of cells, each itself a list of Rd fragments.
+#' @keywords internal
+.split_rd_table_cells <- function(row_children) {
+  cells <- list()
+  current <- list()
+  for (child in row_children) {
+    if (identical(attr(child, "Rd_tag"), "\\tab")) {
+      cells[[length(cells) + 1]] <- current
+      current <- list()
+    } else {
+      current[[length(current) + 1]] <- child
+    }
+  }
+  cells[[length(cells) + 1]] <- current
+  cells
+}
+
+#' Render a `\\tabular{spec}{body}` node as a Markdown table
+#'
+#' `spec` is a column-alignment string like `"ll"` (2 left-aligned
+#' columns) or `"lcr"` (left, center, right) - `l`/`c`/`r` map to the
+#' corresponding Markdown table alignment marker; anything else defaults
+#' to left. `spec` is filtered down to `[lcr]` characters before use, since
+#' the raw Rd source can carry stray whitespace/newlines around the spec
+#' that would otherwise shift the character-to-column mapping. Cell text
+#' is also pipe-escaped (see [.escape_table_pipe()]) - a literal `|` in
+#' cell content would otherwise break the row. Rows that are entirely
+#' blank once collapsed (e.g. a spacer
+#' `\\cr` with nothing between it and the next, or trailing whitespace
+#' after the last real row) are dropped. The first surviving row becomes
+#' the Markdown table's header, since GFM tables require one and Rd's
+#' `\\tabular{}` doesn't distinguish a header row - this matches how such
+#' tables are typically authored in practice (a label row followed by
+#' data rows).
+#'
+#' @param x A `\\tabular{}{}` Rd node (2 children: alignment spec, body).
+#' @return A Markdown table string, or `""` if the table has no non-blank
+#'   rows.
+#' @keywords internal
+.render_rd_tabular <- function(x) {
+  align_spec <- .leaf_or_list_raw_text(x[[1]])
+  align_chars <- Filter(\(ch) ch %in% c("l", "c", "r"), strsplit(align_spec, "")[[1]])
+
+  rows <- .split_rd_table_rows(x[[2]])
+  row_texts <- purrr::map(rows, \(row) {
+    purrr::map_chr(
+      .split_rd_table_cells(row),
+      \(cell) .escape_table_pipe(.collapse_whitespace(.rd_to_text(cell)))
+    )
+  })
+  row_texts <- purrr::keep(row_texts, \(texts) any(nzchar(texts)))
+  if (length(row_texts) == 0) {
+    return("")
+  }
+
+  n_cols <- max(purrr::map_int(row_texts, length))
+  pad_row <- \(texts) {
+    if (length(texts) < n_cols) c(texts, rep("", n_cols - length(texts))) else texts
+  }
+  render_row <- \(texts) paste0("| ", paste(pad_row(texts), collapse = " | "), " |")
+
+  align_marker <- \(ch) switch(ch, c = ":---:", r = "---:", "---")
+  separator_cells <- purrr::map_chr(seq_len(n_cols), \(i) {
+    align_marker(if (i <= length(align_chars)) align_chars[i] else "l")
+  })
+  separator <- paste0("| ", paste(separator_cells, collapse = " | "), " |")
+
+  body_rows <- if (length(row_texts) > 1) {
+    purrr::map_chr(row_texts[-1], render_row)
+  } else {
+    character(0)
+  }
+
+  paste(c(render_row(row_texts[[1]]), separator, body_rows), collapse = "\n")
+}
