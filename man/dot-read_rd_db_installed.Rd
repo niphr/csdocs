@@ -10,10 +10,10 @@
 \item{package}{Name of an installed package, e.g. \code{"dplyr"}.}
 }
 \value{
-A named list of \code{Rd} objects, as returned by \code{\link[tools:Rdutils]{tools::Rd_db()}}.
+A named list of \code{Rd} objects, as returned by \code{\link[tools:Rd_db]{tools::Rd_db()}}.
 }
 \description{
-Thin wrapper around \code{\link[tools:Rdutils]{tools::Rd_db()}} that checks the package is actually
+Thin wrapper around \code{\link[tools:Rd_db]{tools::Rd_db()}} that checks the package is actually
 installed first and raises a helpful error otherwise.
 }
 \keyword{internal}

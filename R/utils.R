@@ -6,7 +6,7 @@
 #' @name op-null-default
 #' @keywords internal
 `%||%` <- function(x, y) {
-  if (is.null(x)) y else x
+  if (is.null(x)) return(y) else return(x)
 }
 
 #' Extract all child tags of a given type from an Rd object
@@ -21,7 +21,7 @@
 #' @return List of matching Rd fragments (possibly empty).
 #' @keywords internal
 .get_rd_tag <- function(rd, tag) {
-  purrr::keep(rd, \(x) identical(attr(x, "Rd_tag"), tag))
+  return(purrr::keep(rd, \(x) identical(attr(x, "Rd_tag"), tag)))
 }
 
 #' Get the children of the first Rd node matching a tag
@@ -42,7 +42,7 @@
   if (length(matches) == 0) {
     return(list())
   }
-  matches[[1]]
+  return(matches[[1]])
 }
 
 #' Flatten an Rd text fragment into a single string, with inline Markdown
@@ -61,7 +61,7 @@
 #' than a plain scalar. Placeholder tokens are dropped so the substituted
 #' text is used (see [.leaf_rd_text()]).
 #'
-#' This is "Tier 2" of pkgmd's text extraction (single-line inline). Use
+#' This is "Tier 2" of csdocs's text extraction (single-line inline). Use
 #' [.rd_to_raw_text()] ("Tier 1") instead for code content
 #' (`\\usage{}`/`\\examples{}`/`\\preformatted{}`) where exact whitespace
 #' must survive, and [.rd_to_block_md()] ("Tier 3", in `render_rd_block.R`)
@@ -86,7 +86,7 @@
 
   text <- paste(pieces, collapse = "")
   text <- gsub("[ \t]+", " ", text)
-  trimws(text)
+  return(trimws(text))
 }
 
 #' Render one Rd child node as an inline Markdown piece
@@ -111,6 +111,35 @@
 
   tag <- attr(x, "Rd_tag") %||% ""
 
+  # The four helpers match disjoint sets of tags, so their order does not
+  # change the result. Each returns NULL for a tag it does not render.
+  helpers <- list(
+    .rd_inline_code_piece,
+    .rd_inline_format_piece,
+    .rd_inline_link_piece,
+    .rd_inline_conditional_piece
+  )
+  for (helper in helpers) {
+    piece <- helper(x, tag, in_code)
+    if (!is.null(piece)) {
+      return(piece)
+    }
+  }
+
+  return(.rd_to_text(x, in_code = in_code))
+}
+
+#' Render an inline Rd node with a code-styled tag
+#'
+#' Renders `\\method{generic}{class}` as `generic.class`, and `\\code`,
+#' `\\command` and `\\link` as a code span. A helper of [.rd_inline_piece()].
+#'
+#' @param x A single Rd list node.
+#' @param tag The `Rd_tag` of `x`, or `""`.
+#' @param in_code As in [.rd_inline_piece()].
+#' @return A string fragment, or `NULL` when `tag` is not one of these tags.
+#' @keywords internal
+.rd_inline_code_piece <- function(x, tag, in_code) {
   if (identical(tag, "\\method") && length(x) == 2) {
     return(paste0(.leaf_or_list_text(x[[1]]), ".", .leaf_or_list_text(x[[2]])))
   }
@@ -124,6 +153,18 @@
     # as code-styled text instead of a broken/absent link.
     return(.inline_code_span(inner))
   }
+  return(NULL)
+}
+
+#' Render an inline Rd node with a text-formatting tag
+#'
+#' Renders `\\emph`, `\\strong`, `\\bold`, `\\dQuote` and `\\sQuote`. A
+#' helper of [.rd_inline_piece()].
+#'
+#' @inheritParams .rd_inline_code_piece
+#' @return A string fragment, or `NULL` when `tag` is not one of these tags.
+#' @keywords internal
+.rd_inline_format_piece <- function(x, tag, in_code) {
   if (identical(tag, "\\emph")) {
     return(paste0("_", .rd_to_text(x, in_code = in_code), "_"))
   }
@@ -136,6 +177,18 @@
   if (identical(tag, "\\sQuote")) {
     return(paste0("\u2018", .rd_to_text(x, in_code = in_code), "\u2019"))
   }
+  return(NULL)
+}
+
+#' Render an inline Rd node with a link or figure tag
+#'
+#' Renders `\\href`, `\\url` and `\\figure`. A helper of
+#' [.rd_inline_piece()].
+#'
+#' @inheritParams .rd_inline_code_piece
+#' @return A string fragment, or `NULL` when `tag` is not one of these tags.
+#' @keywords internal
+.rd_inline_link_piece <- function(x, tag, in_code) {
   if (identical(tag, "\\href") && length(x) >= 2) {
     url <- .rd_to_text(x[[1]], in_code = in_code)
     label <- .rd_to_text(x[[2]], in_code = in_code)
@@ -144,6 +197,21 @@
   if (identical(tag, "\\url")) {
     return(paste0("<", .rd_to_text(x, in_code = in_code), ">"))
   }
+  if (identical(tag, "\\figure")) {
+    return(.render_rd_figure_alt(x))
+  }
+  return(NULL)
+}
+
+#' Render an inline Rd node with a conditional tag
+#'
+#' Renders `\\ifelse{cond}{yes}{no}` and `\\if{cond}{body}`. A helper of
+#' [.rd_inline_piece()].
+#'
+#' @inheritParams .rd_inline_code_piece
+#' @return A string fragment, or `NULL` when `tag` is not one of these tags.
+#' @keywords internal
+.rd_inline_conditional_piece <- function(x, tag, in_code) {
   if (identical(tag, "\\ifelse") && length(x) == 3) {
     # \ifelse{cond}{yes}{no}: we render as text/Markdown, so prefer the
     # "yes" branch only for cond == "text" (or "markdown"); everything
@@ -166,11 +234,7 @@
     }
     return("")
   }
-  if (identical(tag, "\\figure")) {
-    return(.render_rd_figure_alt(x))
-  }
-
-  .rd_to_text(x, in_code = in_code)
+  return(NULL)
 }
 
 #' Render one `\\figure{file}{options}` node as its alt text, if any
@@ -192,11 +256,14 @@
     return("")
   }
   options_text <- .leaf_or_list_raw_text(x[[2]])
-  match <- regmatches(options_text, regexec("alt=['\"]([^'\"]*)['\"]", options_text, perl = TRUE))[[1]]
+  match <- regmatches(
+    options_text,
+    regexec("alt=['\"]([^'\"]*)['\"]", options_text, perl = TRUE)
+  )[[1]]
   if (length(match) < 2) {
     return("")
   }
-  match[2]
+  return(match[2])
 }
 
 #' Render one Rd child that may be a bare leaf or a list, as inline text
@@ -205,14 +272,14 @@
 #' @return A string.
 #' @keywords internal
 .leaf_or_list_text <- function(part) {
-  if (is.list(part)) .rd_to_text(part) else .leaf_rd_text(part)
+  if (is.list(part)) return(.rd_to_text(part)) else return(.leaf_rd_text(part))
 }
 
 #' Flatten an Rd fragment to raw, unnormalized text
 #'
 #' Like [.rd_to_text()], but performs **no** whitespace normalization
 #' (beyond the [.leaf_rd_text()] `USERMACRO` handling) and applies no
-#' inline Markdown formatting. This is "Tier 1" of pkgmd's text
+#' inline Markdown formatting. This is "Tier 1" of csdocs's text
 #' extraction: use it for code content (`\\usage{}`, `\\examples{}`,
 #' `\\preformatted{}`) where exact spacing and indentation must survive
 #' verbatim. Callers should `trimws()` the result themselves to drop
@@ -232,7 +299,7 @@
 
   pieces <- purrr::map_chr(rd, .rd_raw_piece)
 
-  paste(pieces, collapse = "")
+  return(paste(pieces, collapse = ""))
 }
 
 #' Render one Rd child node as raw text (no whitespace/inline formatting)
@@ -244,9 +311,13 @@
     return(.leaf_rd_text(x))
   }
   if (identical(attr(x, "Rd_tag"), "\\method") && length(x) == 2) {
-    return(paste0(.leaf_or_list_raw_text(x[[1]]), ".", .leaf_or_list_raw_text(x[[2]])))
+    return(paste0(
+      .leaf_or_list_raw_text(x[[1]]),
+      ".",
+      .leaf_or_list_raw_text(x[[2]])
+    ))
   }
-  .rd_to_raw_text(x)
+  return(.rd_to_raw_text(x))
 }
 
 #' Render one Rd child that may be a bare leaf or a list, as raw text
@@ -254,7 +325,11 @@
 #' @return A string.
 #' @keywords internal
 .leaf_or_list_raw_text <- function(part) {
-  if (is.list(part)) .rd_to_raw_text(part) else .leaf_rd_text(part)
+  if (is.list(part)) {
+    return(.rd_to_raw_text(part))
+  } else {
+    return(.leaf_rd_text(part))
+  }
 }
 
 #' Coerce a single (non-list) Rd node to a scalar string
@@ -277,7 +352,7 @@
   if (identical(attr(x, "Rd_tag"), "USERMACRO")) {
     return("")
   }
-  paste(as.character(x), collapse = "")
+  return(paste(as.character(x), collapse = ""))
 }
 
 #' Collapse a prose string to a single line
@@ -296,7 +371,7 @@
 #'   collapsed to a single space, trimmed.
 #' @keywords internal
 .collapse_whitespace <- function(text) {
-  trimws(gsub("\\s+", " ", text))
+  return(trimws(gsub("\\s+", " ", text)))
 }
 
 #' Determine which of a topic's name/aliases actually look callable
@@ -337,7 +412,7 @@
     return(character(0))
   }
   candidates <- unique(c(name, aliases %||% character(0)))
-  purrr::keep(candidates, \(n) .looks_callable(n, usage))
+  return(purrr::keep(candidates, \(n) .looks_callable(n, usage)))
 }
 
 #' Decide whether one name looks callable given a topic's usage text
@@ -349,7 +424,7 @@
   if (grepl(paste0(name, "("), usage, fixed = TRUE)) {
     return(TRUE)
   }
-  grepl("^%.+%$", name) && grepl(name, usage, fixed = TRUE)
+  return(grepl("^%.+%$", name) && grepl(name, usage, fixed = TRUE))
 }
 
 #' Escape literal pipe characters for use in a GFM table cell
@@ -365,7 +440,7 @@
 #' @return `text` with every `|` replaced by `\\|`.
 #' @keywords internal
 .escape_table_pipe <- function(text) {
-  gsub("|", "\\|", text, fixed = TRUE)
+  return(gsub("|", "\\|", text, fixed = TRUE))
 }
 
 #' Wrap text in an inline code span, widening delimiters to avoid collision
@@ -393,9 +468,9 @@
 
   needs_padding <- identical(text, "") || grepl("^`", text) || grepl("`$", text)
   if (needs_padding) {
-    paste0(delim, " ", text, " ", delim)
+    return(paste0(delim, " ", text, " ", delim))
   } else {
-    paste0(delim, text, delim)
+    return(paste0(delim, text, delim))
   }
 }
 
@@ -415,7 +490,7 @@
   runs <- gregexpr("`+", code, perl = TRUE)[[1]]
   run_lengths <- attr(runs, "match.length")
   longest_run <- if (identical(runs[1], -1L)) 0L else max(run_lengths)
-  strrep("`", max(3L, longest_run + 1L))
+  return(strrep("`", max(3L, longest_run + 1L)))
 }
 
 #' Make a function/topic name safe for use as a filename
@@ -441,7 +516,7 @@
   if (grepl("^[A-Za-z0-9._-]+$", name)) {
     return(name)
   }
-  utils::URLencode(name, reserved = TRUE)
+  return(utils::URLencode(name, reserved = TRUE))
 }
 
 #' Write text to a file as UTF-8, regardless of the platform's locale
@@ -464,7 +539,7 @@
   con <- file(path, open = "wb")
   on.exit(close(con))
   writeLines(enc2utf8(text), con, useBytes = TRUE)
-  invisible(path)
+  return(invisible(path))
 }
 
 #' Detect whether `package` refers to a local package source directory
@@ -482,5 +557,7 @@
 #'   otherwise (i.e. it should be treated as an installed package name).
 #' @keywords internal
 .is_source_path <- function(package) {
-  fs::dir_exists(package) && fs::file_exists(fs::path(package, "DESCRIPTION"))
+  return(
+    fs::dir_exists(package) && fs::file_exists(fs::path(package, "DESCRIPTION"))
+  )
 }

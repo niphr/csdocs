@@ -25,7 +25,7 @@ A list with fields \code{name}, \code{package}, \code{aliases}, \code{is_private
 \code{references}, \code{author}.
 }
 \description{
-Converts an \code{Rd} object (from either \code{\link[tools:Rdutils]{tools::Rd_db()}} or
+Converts an \code{Rd} object (from either \code{\link[tools:Rd_db]{tools::Rd_db()}} or
 \code{\link[tools:parse_Rd]{tools::parse_Rd()}}) into a flat list consumable by \code{render_md.R}.
 \code{title}/\verb{arguments[].name}/\verb{arguments[].description}/\code{value}/\code{seealso}
 are single-line-safe text via \code{\link[=.rd_to_text]{.rd_to_text()}} (Tier 2 - table cells and

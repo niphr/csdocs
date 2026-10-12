@@ -35,7 +35,7 @@ a \verb{#N} placeholder token followed by the actual substituted text, rather
 than a plain scalar. Placeholder tokens are dropped so the substituted
 text is used (see \code{\link[=.leaf_rd_text]{.leaf_rd_text()}}).
 
-This is "Tier 2" of pkgmd's text extraction (single-line inline). Use
+This is "Tier 2" of csdocs's text extraction (single-line inline). Use
 \code{\link[=.rd_to_raw_text]{.rd_to_raw_text()}} ("Tier 1") instead for code content
 (\verb{\\\\usage\{\}}/\verb{\\\\examples\{\}}/\verb{\\\preformatted{}}) where exact whitespace
 must survive, and \code{\link[=.rd_to_block_md]{.rd_to_block_md()}} ("Tier 3", in \code{render_rd_block.R})

@@ -15,7 +15,7 @@ A single string with internal whitespace untouched.
 \description{
 Like \code{\link[=.rd_to_text]{.rd_to_text()}}, but performs \strong{no} whitespace normalization
 (beyond the \code{\link[=.leaf_rd_text]{.leaf_rd_text()}} \code{USERMACRO} handling) and applies no
-inline Markdown formatting. This is "Tier 1" of pkgmd's text
+inline Markdown formatting. This is "Tier 1" of csdocs's text
 extraction: use it for code content (\verb{\\\\usage\{\}}, \verb{\\\\examples\{\}},
 \verb{\\\preformatted{}}) where exact spacing and indentation must survive
 verbatim. Callers should \code{trimws()} the result themselves to drop

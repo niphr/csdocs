@@ -14,7 +14,7 @@ package source directory.}
 A list with fields \code{name}, \code{version}.
 }
 \description{
-For an installed package, name/version come from \code{\link[utils:packageDescription]{utils::packageVersion()}}.
+For an installed package, name/version come from \code{\link[utils:packageVersion]{utils::packageVersion()}}.
 For a development package, they are read from the \code{DESCRIPTION} file in
 the source directory via \code{\link[=read.dcf]{read.dcf()}} - this deliberately avoids
 requiring installation.

@@ -11,9 +11,9 @@
 #' @keywords internal
 .read_rd_db <- function(package) {
   if (.is_source_path(package)) {
-    .read_rd_db_source(package)
+    return(.read_rd_db_source(package))
   } else {
-    .read_rd_db_installed(package)
+    return(.read_rd_db_installed(package))
   }
 }
 
@@ -39,7 +39,7 @@
     cli::cli_warn("Package {.pkg {package}} has no Rd documentation.")
   }
 
-  db
+  return(db)
 }
 
 #' Read the Rd documentation of a package straight from its source tree
@@ -92,7 +92,7 @@
   if (is.null(names(db))) {
     names(db) <- paste0(seq_along(db), ".Rd")
   }
-  db
+  return(db)
 }
 
 #' Determine a package's exported names, for flagging private topics
@@ -108,9 +108,9 @@
 #' @keywords internal
 .read_exported_names <- function(package) {
   if (.is_source_path(package)) {
-    .read_exported_names_source(package)
+    return(.read_exported_names_source(package))
   } else {
-    .read_exported_names_installed(package)
+    return(.read_exported_names_installed(package))
   }
 }
 
@@ -133,7 +133,7 @@
 #'   couldn't be loaded.
 #' @keywords internal
 .read_exported_names_installed <- function(package) {
-  tryCatch(getNamespaceExports(package), error = function(e) NULL)
+  return(tryCatch(getNamespaceExports(package), error = function(e) NULL))
 }
 
 #' Determine a source package's exported names from its `NAMESPACE` file
@@ -157,7 +157,7 @@
   if (!fs::file_exists(ns_file)) {
     return(NULL)
   }
-  .parse_namespace_exports(ns_file)
+  return(.parse_namespace_exports(ns_file))
 }
 
 #' Parse `export(...)` directives out of a `NAMESPACE` file
@@ -173,7 +173,7 @@
   inner <- sub("^export\\((.*)\\)\\s*$", "\\1", export_lines)
   names <- trimws(unlist(strsplit(inner, ",")))
   names <- gsub("^[`\"']+|[`\"']+$", "", names)
-  names[nzchar(names)]
+  return(names[nzchar(names)])
 }
 
 #' Decide whether a topic counts as "private" (not part of the public API)
@@ -201,7 +201,7 @@
   if (length(callable) == 0) {
     return(FALSE)
   }
-  !any(callable %in% exported_names)
+  return(!any(callable %in% exported_names))
 }
 
 #' Parse one in-memory roxygen2 `RdFile` topic into an `Rd` object
@@ -220,7 +220,7 @@
 .parse_rd_from_roxygen_topic <- function(topic) {
   con <- textConnection(format(topic))
   on.exit(close(con))
-  tools::parse_Rd(con)
+  return(tools::parse_Rd(con))
 }
 
 #' Parse a single Rd object into an internal list
@@ -252,26 +252,26 @@
   aliases <- .parse_rd_aliases(rd)
   usage <- .parse_rd_usage(rd)
 
-  list(
-    name        = name,
-    package     = package,
-    aliases     = aliases,
-    is_private  = .compute_is_private(name, aliases, usage, exported_names),
-    title       = .collapse_whitespace(.rd_to_text(.get_rd_tag(rd, "\\title"))),
+  return(list(
+    name = name,
+    package = package,
+    aliases = aliases,
+    is_private = .compute_is_private(name, aliases, usage, exported_names),
+    title = .collapse_whitespace(.rd_to_text(.get_rd_tag(rd, "\\title"))),
     description = .rd_to_block_md(.first_rd_tag_children(rd, "\\description")),
-    usage       = usage,
-    arguments   = .parse_rd_arguments(rd),
-    details     = .rd_to_block_md(.first_rd_tag_children(rd, "\\details")),
-    sections    = .parse_rd_sections(rd),
-    format      = .rd_to_block_md(.first_rd_tag_children(rd, "\\format")),
-    value       = .collapse_whitespace(.rd_to_text(.get_rd_tag(rd, "\\value"))),
-    examples    = .parse_rd_examples(rd),
-    seealso     = .collapse_whitespace(.rd_to_text(.get_rd_tag(rd, "\\seealso"))),
-    note        = .rd_to_block_md(.first_rd_tag_children(rd, "\\note")),
-    source      = .rd_to_block_md(.first_rd_tag_children(rd, "\\source")),
-    references  = .rd_to_block_md(.first_rd_tag_children(rd, "\\references")),
-    author      = .rd_to_block_md(.first_rd_tag_children(rd, "\\author"))
-  )
+    usage = usage,
+    arguments = .parse_rd_arguments(rd),
+    details = .rd_to_block_md(.first_rd_tag_children(rd, "\\details")),
+    sections = .parse_rd_sections(rd),
+    format = .rd_to_block_md(.first_rd_tag_children(rd, "\\format")),
+    value = .collapse_whitespace(.rd_to_text(.get_rd_tag(rd, "\\value"))),
+    examples = .parse_rd_examples(rd),
+    seealso = .collapse_whitespace(.rd_to_text(.get_rd_tag(rd, "\\seealso"))),
+    note = .rd_to_block_md(.first_rd_tag_children(rd, "\\note")),
+    source = .rd_to_block_md(.first_rd_tag_children(rd, "\\source")),
+    references = .rd_to_block_md(.first_rd_tag_children(rd, "\\references")),
+    author = .rd_to_block_md(.first_rd_tag_children(rd, "\\author"))
+  ))
 }
 
 #' Resolve a topic's name, preferring its `\\name{}` tag
@@ -293,7 +293,7 @@
   if (nzchar(name)) {
     return(name)
   }
-  sub("\\.Rd$", "", rd_name)
+  return(sub("\\.Rd$", "", rd_name))
 }
 
 #' Extract all `\\section{title}{body}` blocks of an Rd object
@@ -309,12 +309,12 @@
 #' @keywords internal
 .parse_rd_sections <- function(rd) {
   sections <- .get_rd_tag(rd, "\\section")
-  purrr::map(sections, \(section) {
-    list(
+  return(purrr::map(sections, \(section) {
+    return(list(
       title = .collapse_whitespace(.rd_to_text(section[[1]])),
-      body  = .rd_to_block_md(section[[2]])
-    )
-  })
+      body = .rd_to_block_md(section[[2]])
+    ))
+  }))
 }
 
 #' Extract all `\\alias{}` entries of an Rd object
@@ -324,7 +324,7 @@
 #' @keywords internal
 .parse_rd_aliases <- function(rd) {
   aliases <- .get_rd_tag(rd, "\\alias")
-  purrr::map_chr(aliases, .rd_to_text)
+  return(purrr::map_chr(aliases, .rd_to_text))
 }
 
 #' Extract the `\\usage{}` block as preformatted code
@@ -341,7 +341,7 @@
   if (length(usage) == 0) {
     return("")
   }
-  trimws(.rd_to_raw_text(usage))
+  return(trimws(.rd_to_raw_text(usage)))
 }
 
 #' Extract `\\arguments{}` as a list of name/description pairs
@@ -364,12 +364,12 @@
   items <- purrr::flatten(purrr::map(arg_blocks, .get_rd_tag, tag = "\\item"))
   items <- purrr::keep(items, \(item) length(item) >= 2)
 
-  purrr::map(items, \(item) {
-    list(
-      name        = .collapse_whitespace(.rd_to_text(item[[1]])),
+  return(purrr::map(items, \(item) {
+    return(list(
+      name = .collapse_whitespace(.rd_to_text(item[[1]])),
       description = .collapse_whitespace(.rd_to_text(item[[2]]))
-    )
-  })
+    ))
+  }))
 }
 
 #' Extract the `\\examples{}` block as a code string
@@ -387,5 +387,5 @@
   if (length(examples) == 0) {
     return("")
   }
-  trimws(.rd_to_raw_text(examples))
+  return(trimws(.rd_to_raw_text(examples)))
 }

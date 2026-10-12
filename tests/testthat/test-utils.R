@@ -182,7 +182,7 @@ test_that(".callable_candidates finds every callable when a topic documents more
 })
 
 test_that(".callable_candidates recognizes an infix operator despite no call syntax", {
-  # Real pkgmd regression: %||%'s own \usage{} is "x %||% y" - never
+  # Real csdocs regression: %||%'s own \usage{} is "x %||% y" - never
   # "%||%(" - so the plain name-followed-by-"(" check alone missed it,
   # which meant %||% was silently never eligible to be flagged private.
   expect_equal(.callable_candidates("%||%", "%||%", "x %||% y"), "%||%")

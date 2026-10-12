@@ -1,4 +1,4 @@
 library(testthat)
-library(pkgmd)
+library(csdocs)
 
-test_check("pkgmd")
+test_check("csdocs")

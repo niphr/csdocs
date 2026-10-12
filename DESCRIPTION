@@ -1,22 +1,36 @@
-Package: pkgmd
-Title: Generate Markdown Reference Documentation for R Packages
-Version: 0.1
+Package: csdocs
+Title: Markdown Reference and Site Documentation for R Packages
+Version: 2026.10.12
 Authors@R: c(
-    person("Peter", "Czerner", email = "peterretep@posteo.de", role = c("aut", "cre"))
+    person(
+      given = c("Richard", "Aubrey"),
+      family = "White",
+      email = "hello@rwhite.no",
+      role = c("aut", "cre")
+    ),
+    person(
+      given = "Peter",
+      family = "Czerner",
+      email = "peterretep@posteo.de",
+      role = c("aut", "cph"),
+      comment = "original pkgmd code"
+    ),
+    person(
+      given = "Folkehelseinstituttet",
+      role = "cph"
     )
-Description: Generates plain Markdown reference documentation for any R
-    package, installed or a local development source tree, optimized for
-    rendering in the 'GitHub'/'Gitea' browser UI and for use as LLM context
-    (e.g. 'Claude Code'). Reads Rd documentation via tools::Rd_db() (installed
-    packages) or directly from man/*.Rd (development packages, no
-    installation required) and renders one file per topic plus a
-    navigable index.
+    )
+Description: Renders the Rd documentation of an R package as plain
+    'Markdown': one file per topic, an index, and one file with the full
+    reference. The output reads well on 'GitHub' and works as context for a
+    large language model. It reads an installed package with
+    tools::Rd_db(), or a source package from its man/*.Rd files without
+    installation.
 License: MIT + file LICENSE
-URL: https://github.com/peterczerner/pkgmd
-BugReports: https://github.com/peterczerner/pkgmd/issues
+URL: https://niphr.github.io/csdocs/, https://github.com/niphr/csdocs
+BugReports: https://github.com/niphr/csdocs/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 Depends:
     R (>= 4.1.0)
 Imports:
@@ -26,7 +40,11 @@ Imports:
     fs (>= 1.6.0)
 Suggests:
     testthat (>= 3.0.0),
-    dplyr,
     withr,
-    roxygen2 (>= 7.0.0)
+    roxygen2 (>= 7.0.0),
+    rmarkdown,
+    knitr,
+    yaml
 Config/testthat/edition: 3
+Config/Needs/website: niphr/cstemplate
+Config/roxygen2/version: 8.1.1

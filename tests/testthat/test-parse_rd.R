@@ -68,7 +68,7 @@ test_that(".compute_is_private treats NULL exported_names as \"unknown\" (never 
 })
 
 test_that(".compute_is_private flags an internal infix operator as private", {
-  # Real pkgmd regression: %||% is an unexported helper, but its usage
+  # Real csdocs regression: %||% is an unexported helper, but its usage
   # ("x %||% y") never matches the "name(" call-syntax check, so it was
   # silently exempted from private-flagging the same way a dataset is.
   is_private <- .compute_is_private("%||%", "%||%", "x %||% y", exported_names = c("build_reference"))

@@ -2,6 +2,10 @@
 ^\.Rproj\.user$
 ^\.git$
 ^\.gitignore$
-^md-docs$
 ^LICENSE\.md$
-^cran-comments\.md$
+^dev$
+^_pkgdown\.yml$
+^\.github$
+^CLAUDE\.md$
+^AGENTS\.md$
+^docs$

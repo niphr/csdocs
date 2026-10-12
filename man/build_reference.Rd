@@ -57,7 +57,7 @@ Code).
 \code{package} accepts two kinds of input:
 \itemize{
 \item the name of an installed package, e.g. \code{"dplyr"} - Rd data is
-read via \code{\link[tools:Rdutils]{tools::Rd_db()}};
+read via \code{\link[tools:Rd_db]{tools::Rd_db()}};
 \item a path to a local package source directory, e.g. \code{"."} or
 \code{"../myotherpkg"} (detected by the presence of a \code{DESCRIPTION} file
 at that path) - Rd data is read directly from \verb{man/*.Rd}, falling
@@ -69,14 +69,14 @@ installed.
 \examples{
 \dontrun{
 # Installed package:
-pkgmd::build_reference("dplyr", output_dir = "docs/reference")
+csdocs::build_reference("dplyr", output_dir = "docs/reference")
 
 # Development package, not installed - "." and "md-docs" are both
 # defaults, so this is equivalent to just build_reference():
-pkgmd::build_reference(".", output_dir = "md-docs")
+csdocs::build_reference(".", output_dir = "md-docs")
 
 # Public API only, no internal helpers:
-pkgmd::build_reference("dplyr", output_dir = "docs/reference", include_private = FALSE)
+csdocs::build_reference("dplyr", output_dir = "docs/reference", include_private = FALSE)
 }
 
 }

@@ -1,6 +1,6 @@
 #' Render a list of Rd block-level children as multi-paragraph Markdown
 #'
-#' This is "Tier 3" of pkgmd's text extraction (see [.rd_to_text()] for
+#' This is "Tier 3" of csdocs's text extraction (see [.rd_to_text()] for
 #' Tier 2 and [.rd_to_raw_text()] for Tier 1): unlike those, which produce
 #' single-line-safe text, `.rd_to_block_md()` walks Rd content and produces
 #' real multi-line Markdown — paragraphs, bullet/numbered lists, nested
@@ -38,11 +38,13 @@
       segments[[length(segments) + 1]] <<- text
     }
     buffer <<- list()
+    return(invisible(NULL))
   }
 
   for (child in rd) {
     tag <- attr(child, "Rd_tag")
     html_block <- .if_out_html_block(child)
+    renderer <- .rd_block_renderer(tag, heading_level)
     if (!is.null(html_block)) {
       # \if{html}{\out{<div class="sourceCode r">...}}: a real code block
       # authored as an HTML passthrough (the roxygen2/pkgdown markdown
@@ -51,31 +53,44 @@
       # plain conditional (handled inline, see .rd_inline_piece()).
       flush_buffer()
       segments[[length(segments) + 1]] <- html_block
-    } else if (identical(tag, "\\itemize")) {
+    } else if (!is.null(renderer)) {
       flush_buffer()
-      segments[[length(segments) + 1]] <- .render_rd_itemize(child)
-    } else if (identical(tag, "\\enumerate")) {
-      flush_buffer()
-      segments[[length(segments) + 1]] <- .render_rd_enumerate(child)
-    } else if (identical(tag, "\\describe")) {
-      flush_buffer()
-      segments[[length(segments) + 1]] <- .render_rd_describe(child)
-    } else if (identical(tag, "\\subsection")) {
-      flush_buffer()
-      segments[[length(segments) + 1]] <- .render_rd_subsection(child, heading_level)
-    } else if (identical(tag, "\\preformatted")) {
-      flush_buffer()
-      segments[[length(segments) + 1]] <- .render_rd_preformatted(child)
-    } else if (identical(tag, "\\tabular")) {
-      flush_buffer()
-      segments[[length(segments) + 1]] <- .render_rd_tabular(child)
+      segments[[length(segments) + 1]] <- renderer(child)
     } else {
       buffer[[length(buffer) + 1]] <- child
     }
   }
   flush_buffer()
 
-  paste(segments, collapse = "\n\n")
+  return(paste(segments, collapse = "\n\n"))
+}
+
+#' Find the renderer for a block-level Rd tag
+#'
+#' [.rd_to_block_md()] renders six block-level tags, each with its own
+#' renderer. A tag matches only when it is [identical()] to one of them.
+#'
+#' @param tag The `Rd_tag` attribute of one Rd child node, or `NULL`.
+#' @param heading_level As in [.rd_to_block_md()]. Only the
+#'   `\\subsection{}{}` renderer uses it.
+#' @return A function of one Rd node that returns a Markdown string, or
+#'   `NULL` when `tag` is not a block-level tag.
+#' @keywords internal
+.rd_block_renderer <- function(tag, heading_level) {
+  renderers <- list(
+    "\\itemize" = .render_rd_itemize,
+    "\\enumerate" = .render_rd_enumerate,
+    "\\describe" = .render_rd_describe,
+    "\\subsection" = \(node) .render_rd_subsection(node, heading_level),
+    "\\preformatted" = .render_rd_preformatted,
+    "\\tabular" = .render_rd_tabular
+  )
+  for (name in names(renderers)) {
+    if (identical(tag, name)) {
+      return(renderers[[name]])
+    }
+  }
+  return(NULL)
 }
 
 #' Collapse a block of prose to paragraphs, preserving paragraph breaks
@@ -95,7 +110,7 @@
   text <- gsub("\r\n", "\n", text)
   text <- gsub("\n[ \t]*\n([ \t]*\n)*", "\n\n", text)
   text <- gsub("(?<!\n)\n(?!\n)", " ", text, perl = TRUE)
-  trimws(text)
+  return(trimws(text))
 }
 
 #' Split the children of an `\\itemize{}`/`\\enumerate{}` node into items
@@ -130,7 +145,7 @@
     items[[length(items) + 1]] <- current
   }
 
-  items
+  return(items)
 }
 
 #' Render an `\\itemize{}` node as a Markdown bullet list
@@ -149,8 +164,10 @@
 #' @keywords internal
 .render_rd_itemize <- function(x) {
   items <- .split_rd_items(x)
-  lines <- purrr::map_chr(items, \(item) paste0("- ", .collapse_whitespace(.rd_to_text(item))))
-  paste(lines, collapse = "\n")
+  lines <- purrr::map_chr(items, \(item) {
+    return(paste0("- ", .collapse_whitespace(.rd_to_text(item))))
+  })
+  return(paste(lines, collapse = "\n"))
 }
 
 #' Render an `\\enumerate{}` node as a Markdown numbered list
@@ -164,9 +181,9 @@
 .render_rd_enumerate <- function(x) {
   items <- .split_rd_items(x)
   lines <- purrr::imap_chr(items, \(item, i) {
-    paste0(i, ". ", .collapse_whitespace(.rd_to_text(item)))
+    return(paste0(i, ". ", .collapse_whitespace(.rd_to_text(item))))
   })
-  paste(lines, collapse = "\n")
+  return(paste(lines, collapse = "\n"))
 }
 
 #' Render a `\\describe{}` node as a Markdown definition-style bullet list
@@ -188,9 +205,9 @@
     }
     term <- .collapse_whitespace(.rd_to_text(item[[1]]))
     desc <- .collapse_whitespace(.rd_to_text(item[[2]]))
-    paste0("- **", term, "**: ", desc)
+    return(paste0("- **", term, "**: ", desc))
   })
-  paste(lines, collapse = "\n")
+  return(paste(lines, collapse = "\n"))
 }
 
 #' Render a `\\subsection{title}{body}` node as a Markdown heading + body
@@ -208,7 +225,7 @@
   title <- .collapse_whitespace(.rd_to_text(x[[1]]))
   heading <- paste0(strrep("#", heading_level), " ", title)
   body <- .rd_to_block_md(x[[2]], heading_level = heading_level + 1)
-  paste(c(heading, body), collapse = "\n\n")
+  return(paste(c(heading, body), collapse = "\n\n"))
 }
 
 #' Render a `\\preformatted{}` node as a fenced Markdown code block
@@ -224,7 +241,7 @@
 .render_rd_preformatted <- function(x) {
   code <- trimws(.rd_to_raw_text(x))
   fence <- .code_fence(code)
-  paste0(fence, "\n", code, "\n", fence)
+  return(paste0(fence, "\n", code, "\n", fence))
 }
 
 #' Detect a block-level `\\if{html}{\\out{...}}` HTML code block, if `x` is one
@@ -265,7 +282,7 @@
     return(NULL)
   }
 
-  .render_rd_out_as_code(out_node[[1]])
+  return(.render_rd_out_as_code(out_node[[1]]))
 }
 
 #' Render an `\\out{}` node's raw HTML as a fenced Markdown code block
@@ -302,7 +319,7 @@
     return(NULL)
   }
   fence <- .code_fence(code)
-  paste0(fence, lang, "\n", code, "\n", fence)
+  return(paste0(fence, lang, "\n", code, "\n", fence))
 }
 
 #' Detect a `class="sourceCode <lang>"` marker in raw HTML, if present
@@ -310,11 +327,14 @@
 #' @return The language string (e.g. `"r"`), or `NULL` if not found.
 #' @keywords internal
 .detect_source_code_lang <- function(html) {
-  match <- regmatches(html, regexec('class="sourceCode\\s+([a-zA-Z0-9_+-]+)"', html, perl = TRUE))[[1]]
+  match <- regmatches(
+    html,
+    regexec('class="sourceCode\\s+([a-zA-Z0-9_+-]+)"', html, perl = TRUE)
+  )[[1]]
   if (length(match) < 2) {
     return(NULL)
   }
-  match[2]
+  return(match[2])
 }
 
 #' Strip HTML tags from a string
@@ -322,7 +342,7 @@
 #' @return `html` with every `<...>` tag removed.
 #' @keywords internal
 .strip_html_tags <- function(html) {
-  gsub("<[^>]*>", "", html)
+  return(gsub("<[^>]*>", "", html))
 }
 
 #' Decode the handful of HTML entities that show up in Rd `\\out{}` blocks
@@ -342,7 +362,7 @@
   text <- gsub("&#39;", "'", text, fixed = TRUE)
   text <- gsub("&apos;", "'", text, fixed = TRUE)
   text <- gsub("&amp;", "&", text, fixed = TRUE)
-  text
+  return(text)
 }
 
 #' Split the children of a `\\tabular{}{}` node's body into rows
@@ -371,7 +391,7 @@
     }
   }
   rows[[length(rows) + 1]] <- current
-  rows
+  return(rows)
 }
 
 #' Split one table row's children into cells
@@ -390,7 +410,7 @@
     }
   }
   cells[[length(cells) + 1]] <- current
-  cells
+  return(cells)
 }
 
 #' Render a `\\tabular{spec}{body}` node as a Markdown table
@@ -417,14 +437,17 @@
 #' @keywords internal
 .render_rd_tabular <- function(x) {
   align_spec <- .leaf_or_list_raw_text(x[[1]])
-  align_chars <- Filter(\(ch) ch %in% c("l", "c", "r"), strsplit(align_spec, "")[[1]])
+  align_chars <- Filter(
+    \(ch) ch %in% c("l", "c", "r"),
+    strsplit(align_spec, "")[[1]]
+  )
 
   rows <- .split_rd_table_rows(x[[2]])
   row_texts <- purrr::map(rows, \(row) {
-    purrr::map_chr(
+    return(purrr::map_chr(
       .split_rd_table_cells(row),
       \(cell) .escape_table_pipe(.collapse_whitespace(.rd_to_text(cell)))
-    )
+    ))
   })
   row_texts <- purrr::keep(row_texts, \(texts) any(nzchar(texts)))
   if (length(row_texts) == 0) {
@@ -433,13 +456,19 @@
 
   n_cols <- max(purrr::map_int(row_texts, length))
   pad_row <- \(texts) {
-    if (length(texts) < n_cols) c(texts, rep("", n_cols - length(texts))) else texts
+    if (length(texts) < n_cols) {
+      return(c(texts, rep("", n_cols - length(texts))))
+    } else {
+      return(texts)
+    }
   }
-  render_row <- \(texts) paste0("| ", paste(pad_row(texts), collapse = " | "), " |")
+  render_row <- \(texts) {
+    return(paste0("| ", paste(pad_row(texts), collapse = " | "), " |"))
+  }
 
   align_marker <- \(ch) switch(ch, c = ":---:", r = "---:", "---")
   separator_cells <- purrr::map_chr(seq_len(n_cols), \(i) {
-    align_marker(if (i <= length(align_chars)) align_chars[i] else "l")
+    return(align_marker(if (i <= length(align_chars)) align_chars[i] else "l"))
   })
   separator <- paste0("| ", paste(separator_cells, collapse = " | "), " |")
 
@@ -449,5 +478,8 @@
     character(0)
   }
 
-  paste(c(render_row(row_texts[[1]]), separator, body_rows), collapse = "\n")
+  return(paste(
+    c(render_row(row_texts[[1]]), separator, body_rows),
+    collapse = "\n"
+  ))
 }

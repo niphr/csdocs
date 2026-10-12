@@ -51,20 +51,29 @@
 #' @examples
 #' \dontrun{
 #' # Installed package:
-#' pkgmd::build_reference("dplyr", output_dir = "docs/reference")
+#' csdocs::build_reference("dplyr", output_dir = "docs/reference")
 #'
 #' # Development package, not installed - "." and "md-docs" are both
 #' # defaults, so this is equivalent to just build_reference():
-#' pkgmd::build_reference(".", output_dir = "md-docs")
+#' csdocs::build_reference(".", output_dir = "md-docs")
 #'
 #' # Public API only, no internal helpers:
-#' pkgmd::build_reference("dplyr", output_dir = "docs/reference", include_private = FALSE)
+#' csdocs::build_reference("dplyr", output_dir = "docs/reference", include_private = FALSE)
 #' }
 #'
 #' @export
-build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, include_private = TRUE) {
+build_reference <- function(
+  package = ".",
+  output_dir = NULL,
+  overwrite = TRUE,
+  include_private = TRUE
+) {
   stopifnot(is.character(package), length(package) == 1)
-  stopifnot(is.logical(include_private), length(include_private) == 1, !is.na(include_private))
+  stopifnot(
+    is.logical(include_private),
+    length(include_private) == 1,
+    !is.na(include_private)
+  )
 
   output_dir <- .resolve_output_dir(package, output_dir)
   stopifnot(is.character(output_dir), length(output_dir) == 1)
@@ -91,17 +100,22 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
 
   purrr::walk(topics, \(topic) {
     .write_topic_file(topic, metadata$version, output_dir)
-    cli::cli_progress_update(id = progress_id)
+    return(cli::cli_progress_update(id = progress_id))
   })
 
   .write_index_file(topics, metadata$name, metadata$version, output_dir)
-  .write_full_reference_file(topics, metadata$name, metadata$version, output_dir)
+  .write_full_reference_file(
+    topics,
+    metadata$name,
+    metadata$version,
+    output_dir
+  )
 
   cli::cli_alert_success(
     "{length(topics)} functions documented in {.path {output_dir}}"
   )
 
-  invisible(output_dir)
+  return(invisible(output_dir))
 }
 
 #' Resolve `output_dir`, applying the source-package-only default
@@ -130,7 +144,7 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
       "i" = "The {.val md-docs} default only applies when {.arg package} is a local source directory (e.g. {.code build_reference(\".\")})."
     ))
   }
-  "md-docs"
+  return("md-docs")
 }
 
 #' Parse every entry of an Rd database into topic lists
@@ -147,9 +161,11 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
 #' @return List of parsed topic lists, sorted by `name`.
 #' @keywords internal
 .build_topics <- function(db, package, exported_names = NULL) {
-  topics <- purrr::imap(db, \(rd, rd_name) .parse_rd_topic(rd, rd_name, package, exported_names))
+  topics <- purrr::imap(db, \(rd, rd_name) {
+    return(.parse_rd_topic(rd, rd_name, package, exported_names))
+  })
   topics <- purrr::keep(topics, \(topic) nzchar(topic$name))
-  topics[order(purrr::map_chr(topics, "name"))]
+  return(topics[order(purrr::map_chr(topics, "name"))])
 }
 
 #' Abort if `output_dir` already contains `.md` files
@@ -168,7 +184,7 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
       "i" = "Set {.code overwrite = TRUE} to overwrite them."
     ))
   }
-  invisible(NULL)
+  return(invisible(NULL))
 }
 
 #' Remove every `.md` file already in `output_dir`
@@ -187,14 +203,14 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
   if (length(existing) > 0) {
     fs::file_delete(existing)
   }
-  invisible(NULL)
+  return(invisible(NULL))
 }
 
 #' Abort if two topics would collide on the filesystem
 #'
 #' Two distinct failure modes: (1) a topic whose name is `README` or
 #' `_full_reference` (case-insensitive) would silently overwrite one of
-#' pkgmd's own generated meta files; (2) two topics whose names differ
+#' csdocs's own generated meta files; (2) two topics whose names differ
 #' only in letter case (e.g. `Foo`/`foo`) write to the same path on a
 #' case-insensitive filesystem (macOS/Windows default), so the second
 #' write silently clobbers the first. Both are rare but corrupt the output
@@ -205,25 +221,29 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
 #' @return `NULL`, invisibly. Aborts via `cli::cli_abort()` if needed.
 #' @keywords internal
 .check_topic_name_collisions <- function(topics) {
-  filenames <- purrr::map_chr(topics, \(topic) paste0(.safe_filename(topic$name), ".md"))
+  filenames <- purrr::map_chr(topics, \(topic) {
+    return(paste0(.safe_filename(topic$name), ".md"))
+  })
   lower <- tolower(filenames)
 
   reserved <- c("readme.md", "_full_reference.md")
   reserved_hits <- unique(filenames[lower %in% reserved])
   if (length(reserved_hits) > 0) {
     cli::cli_abort(
-      "Topic name(s) collide with pkgmd's generated files: {.val {reserved_hits}}."
+      "Topic name(s) collide with csdocs's generated files: {.val {reserved_hits}}."
     )
   }
 
-  dupes <- unique(filenames[duplicated(lower) | duplicated(lower, fromLast = TRUE)])
+  dupes <- unique(filenames[
+    duplicated(lower) | duplicated(lower, fromLast = TRUE)
+  ])
   if (length(dupes) > 0) {
     cli::cli_abort(
       "Topic name(s) differ only in letter case and would collide on a case-insensitive filesystem: {.val {dupes}}."
     )
   }
 
-  invisible(NULL)
+  return(invisible(NULL))
 }
 
 #' Write the Markdown file for a single topic
@@ -234,7 +254,7 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
 #' @keywords internal
 .write_topic_file <- function(topic, version, output_dir) {
   path <- fs::path(output_dir, paste0(.safe_filename(topic$name), ".md"))
-  .write_utf8_lines(.render_topic_md(topic, version), path)
+  return(.write_utf8_lines(.render_topic_md(topic, version), path))
 }
 
 #' Write the `README.md` index file
@@ -246,7 +266,7 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
 #' @keywords internal
 .write_index_file <- function(topics, package, version, output_dir) {
   path <- fs::path(output_dir, "README.md")
-  .write_utf8_lines(.render_index_md(topics, package, version), path)
+  return(.write_utf8_lines(.render_index_md(topics, package, version), path))
 }
 
 #' Write `_full_reference.md` (every topic in a single file)
@@ -255,7 +275,7 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
 #' `@docs/reference/_full_reference.md`. The underscore prefix sorts the
 #' file alphabetically to the top of the directory and signals that it is
 #' a generated meta file. Each topic section is rendered with
-#' `footer = FALSE` - the per-topic "Generated by pkgmd / Back to index"
+#' `footer = FALSE` - the per-topic "Generated by ... / Back to index"
 #' footer and its relative links only make sense in a standalone file, not
 #' repeated after every one of potentially hundreds of sections here.
 #'
@@ -268,7 +288,7 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
 .write_full_reference_file <- function(topics, package, version, output_dir) {
   content <- .render_full_reference_md(topics, package, version)
   path <- fs::path(output_dir, "_full_reference.md")
-  .write_utf8_lines(content, path)
+  return(.write_utf8_lines(content, path))
 }
 
 #' Render every topic into a single Markdown string
@@ -284,14 +304,16 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
 #' @return A single Markdown string.
 #' @keywords internal
 .render_full_reference_md <- function(topics, package, version) {
-  sections <- purrr::map_chr(topics, \(topic) .render_topic_md(topic, version, footer = FALSE))
+  sections <- purrr::map_chr(topics, \(topic) {
+    return(.render_topic_md(topic, version, footer = FALSE))
+  })
   header <- glue::glue(
     "# {package} \u2014 Full Reference\n\n",
     "**Version:** {version} \u00b7 {length(topics)} functions\n\n",
     "---\n\n",
     .trim = FALSE
   )
-  paste0(header, paste(sections, collapse = "\n"))
+  return(paste0(header, paste(sections, collapse = "\n")))
 }
 
 #' Get a package's full reference documentation as a single string
@@ -315,16 +337,20 @@ build_reference <- function(package = ".", output_dir = NULL, overwrite = TRUE, 
 #' @examples
 #' \dontrun{
 #' # Installed package:
-#' docs <- pkgmd::get_documentation("dplyr")
+#' docs <- csdocs::get_documentation("dplyr")
 #'
 #' # Development package, not installed:
-#' docs <- pkgmd::get_documentation(".")
+#' docs <- csdocs::get_documentation(".")
 #' }
 #'
 #' @export
 get_documentation <- function(package = ".", include_private = FALSE) {
   stopifnot(is.character(package), length(package) == 1)
-  stopifnot(is.logical(include_private), length(include_private) == 1, !is.na(include_private))
+  stopifnot(
+    is.logical(include_private),
+    length(include_private) == 1,
+    !is.na(include_private)
+  )
 
   metadata <- .read_package_metadata(package)
   db <- .read_rd_db(package)
@@ -334,7 +360,7 @@ get_documentation <- function(package = ".", include_private = FALSE) {
     topics <- purrr::keep(topics, \(topic) !topic$is_private)
   }
 
-  .render_full_reference_md(topics, metadata$name, metadata$version)
+  return(.render_full_reference_md(topics, metadata$name, metadata$version))
 }
 
 #' Resolve package name and version, for either an installed or a source package
@@ -351,14 +377,14 @@ get_documentation <- function(package = ".", include_private = FALSE) {
 .read_package_metadata <- function(package) {
   if (.is_source_path(package)) {
     desc <- read.dcf(fs::path(package, "DESCRIPTION"))
-    list(
-      name    = unname(desc[1, "Package"]),
+    return(list(
+      name = unname(desc[1, "Package"]),
       version = unname(desc[1, "Version"])
-    )
+    ))
   } else {
-    list(
-      name    = package,
+    return(list(
+      name = package,
       version = as.character(utils::packageVersion(package))
-    )
+    ))
   }
 }

@@ -1,0 +1,5 @@
+Sys.setenv(RSTUDIO_PANDOC = "C:/Users/RIWH/AppData/Local/Programs/Positron/resources/app/quarto/bin/tools")
+pkgload::load_all(".", quiet = TRUE)
+f <- commandArgs(trailingOnly = TRUE)
+r <- as.data.frame(testthat::test_local(".", filter = if (length(f)) f[1] else NULL, stop_on_failure = TRUE, reporter = "summary"))
+cat("TESTS", nrow(r), "FAILED", sum(r$failed), "SKIPPED", sum(r$skipped), "\n")

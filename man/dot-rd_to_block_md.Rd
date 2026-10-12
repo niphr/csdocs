@@ -18,7 +18,7 @@ A single Markdown string with blank lines between block
 segments.
 }
 \description{
-This is "Tier 3" of pkgmd's text extraction (see \code{\link[=.rd_to_text]{.rd_to_text()}} for
+This is "Tier 3" of csdocs's text extraction (see \code{\link[=.rd_to_text]{.rd_to_text()}} for
 Tier 2 and \code{\link[=.rd_to_raw_text]{.rd_to_raw_text()}} for Tier 1): unlike those, which produce
 single-line-safe text, \code{.rd_to_block_md()} walks Rd content and produces
 real multi-line Markdown — paragraphs, bullet/numbered lists, nested

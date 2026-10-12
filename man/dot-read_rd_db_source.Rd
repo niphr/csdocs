@@ -12,7 +12,7 @@
 }
 \value{
 A named list of \code{Rd} objects, in the same shape as
-\code{\link[tools:Rdutils]{tools::Rd_db()}} would return for an installed package.
+\code{\link[tools:Rd_db]{tools::Rd_db()}} would return for an installed package.
 }
 \description{
 Used for development packages that have not been installed. Reads every

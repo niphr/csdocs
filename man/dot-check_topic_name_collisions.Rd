@@ -15,7 +15,7 @@
 \description{
 Two distinct failure modes: (1) a topic whose name is \code{README} or
 \verb{_full_reference} (case-insensitive) would silently overwrite one of
-pkgmd's own generated meta files; (2) two topics whose names differ
+csdocs's own generated meta files; (2) two topics whose names differ
 only in letter case (e.g. \code{Foo}/\code{foo}) write to the same path on a
 case-insensitive filesystem (macOS/Windows default), so the second
 write silently clobbers the first. Both are rare but corrupt the output

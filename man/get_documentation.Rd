@@ -29,10 +29,10 @@ reference injected directly into its context in one call.
 \examples{
 \dontrun{
 # Installed package:
-docs <- pkgmd::get_documentation("dplyr")
+docs <- csdocs::get_documentation("dplyr")
 
 # Development package, not installed:
-docs <- pkgmd::get_documentation(".")
+docs <- csdocs::get_documentation(".")
 }
 
 }
