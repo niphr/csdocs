@@ -5,7 +5,7 @@ Write the `README.md` index file
 ## Usage
 
 ``` r
-.write_index_file(topics, package, version, output_dir)
+.write_index_file(topics, package, version, output_dir, sections = NULL)
 ```
 
 ## Arguments
@@ -25,6 +25,12 @@ Write the `README.md` index file
 - output_dir:
 
   Target directory.
+
+- sections:
+
+  Result of
+  [`.read_pkgdown_sections()`](https://niphr.github.io/csdocs/reference/dot-read_pkgdown_sections.md),
+  or `NULL`.
 
 ## Value
 

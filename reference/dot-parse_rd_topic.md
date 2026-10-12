@@ -47,7 +47,7 @@ prose.
 
 ## Value
 
-A list with fields `name`, `package`, `aliases`, `is_private`, `title`,
-`description`, `usage`, `arguments`, `details`, `sections`, `format`,
-`value`, `examples`, `seealso`, `note`, `source`, `references`,
-`author`.
+A list with fields `name`, `package`, `aliases`, `concepts`,
+`is_private`, `title`, `description`, `usage`, `arguments`, `details`,
+`sections`, `format`, `value`, `examples`, `seealso`, `note`, `source`,
+`references`, `author`.

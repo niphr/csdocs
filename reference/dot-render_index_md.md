@@ -1,7 +1,9 @@
 # Render the `README.md` index file for a reference output directory
 
-Each row's "Topic" cell uses the same heading identifier as the topic's
-own file (see
+The index groups the topics under `##` headings (see
+[`.group_index_topics()`](https://niphr.github.io/csdocs/reference/dot-group_index_topics.md)),
+with one table per group. Each row's "Topic" cell uses the same heading
+identifier as the topic's own file (see
 [`.render_topic_heading()`](https://niphr.github.io/csdocs/reference/dot-render_topic_heading.md)) -
 callable names get `()`, datasets/concept pages don't - plus the same
 `_(private)_` marker (see
@@ -19,7 +21,7 @@ since both are free-form text that could contain a literal `|`.
 ## Usage
 
 ``` r
-.render_index_md(topics, package, version)
+.render_index_md(topics, package, version, sections = NULL)
 ```
 
 ## Arguments
@@ -35,6 +37,12 @@ since both are free-form text that could contain a literal `|`.
 - version:
 
   Package version.
+
+- sections:
+
+  Result of
+  [`.read_pkgdown_sections()`](https://niphr.github.io/csdocs/reference/dot-read_pkgdown_sections.md),
+  or `NULL` to group by `\concept`.
 
 ## Value
 
