@@ -6,6 +6,9 @@ when a link map is active (see
 [`.with_link_map()`](https://niphr.github.io/csdocs/reference/dot-with_link_map.md)),
 and a code span otherwise. A helper of
 [`.rd_inline_piece()`](https://niphr.github.io/csdocs/reference/dot-rd_inline_piece.md).
+An `\\href{#X}` to the same page becomes a link to `#x`, in lowercase,
+because GitHub lowercases the target `id` (see
+[`.render_rd_out_as_code()`](https://niphr.github.io/csdocs/reference/dot-render_rd_out_as_code.md)).
 
 ## Usage
 

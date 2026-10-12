@@ -4,12 +4,12 @@ Converts an `Rd` object (from either
 [`tools::Rd_db()`](https://rdrr.io/r/tools/Rdutils.html) or
 [`tools::parse_Rd()`](https://rdrr.io/r/tools/parse_Rd.html)) into a
 flat list consumable by `render_md.R`.
-`title`/`arguments[].name`/`arguments[].description`/`value` are
+`title`/`arguments[].name`/`arguments[].description` are
 single-line-safe text via
 [`.rd_to_text()`](https://niphr.github.io/csdocs/reference/dot-rd_to_text.md)
 (Tier 2 - table cells and the page title can't contain a literal
 newline). `description`/
-`details`/`format`/`seealso`/`note`/`source`/`references`/`author`/each
+`details`/`format`/`value`/`seealso`/`note`/`source`/`references`/`author`/each
 section's body are full multi-paragraph Markdown via
 [`.rd_to_block_md()`](https://niphr.github.io/csdocs/reference/dot-rd_to_block_md.md)
 (Tier 3), since they commonly contain `\\itemize{}`, `\\describe{}`,

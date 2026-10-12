@@ -1,10 +1,6 @@
-# Render an `\\out{}` node's raw HTML as a fenced Markdown code block
+# Render the raw HTML of an `\\out{}` node as Markdown
 
-Strips HTML tags and decodes common entities rather than attempting to
-actually parse the HTML - good enough to turn e.g.
-`<div class="sourceCode r">mutate(x) #&gt; result</div>` into readable
-```` ```r mutate(x) #> result ``` ```` , not pixel-perfect HTML
-rendering (which Markdown can't do anyway).
+The function keeps two shapes of R6 class HTML and drops all other HTML.
 
 ## Usage
 
@@ -20,19 +16,21 @@ rendering (which Markdown can't do anyway).
 
 ## Value
 
-A fenced Markdown code block, or `NULL` if it has no content once HTML
-tags are stripped (a pure wrapper tag, not real code).
+A Markdown string, or `NULL` when the function drops the HTML.
 
 ## Details
 
-roxygen2's Markdown fenced-code support compiles a single fenced block
-into *three* separate top-level nodes: an opening
-`\\if{html}{\out{<div class="sourceCode r">}}`, the actual code as a
-plain `\\preformatted{}` (portable across all output formats, already
-handled by
-[`.render_rd_preformatted()`](https://niphr.github.io/csdocs/reference/dot-render_rd_preformatted.md)),
-and a closing `\\if{html}{\out{</div>}}`. The opening/closing wrapper
-nodes have no real content once their tags are stripped - returning
-`NULL` instead of an empty fence for those lets the caller skip them
-entirely rather than emitting spurious empty ```` ``` ```` blocks around
-the real one.
+- An anchor `<a id="X"></a>` becomes `<a id="x"></a>` on its own line.
+  The id is lowercase, because GitHub lowercases an `id` and does not
+  change an `href`.
+  [`.rd_inline_link_piece()`](https://niphr.github.io/csdocs/reference/dot-rd_inline_link_piece.md)
+  lowercases the in-page `\\href{#X}` fragment to match.
+
+- The "Inherited methods" block becomes a Markdown list of code spans,
+  with no links. See
+  [`.render_inherited_methods()`](https://niphr.github.io/csdocs/reference/dot-render_inherited_methods.md).
+
+roxygen2 writes a fenced code block as `\\preformatted{}` between two
+`\\out{}` wrappers.
+[`.render_rd_preformatted()`](https://niphr.github.io/csdocs/reference/dot-render_rd_preformatted.md)
+renders the code, so the wrappers carry nothing to keep.

@@ -9,3 +9,6 @@
 - The index `README.md` groups topics under the `reference:` sections of
   `_pkgdown.yml`, or by `\concept` when that file is absent. Topics in
   no group go under `## Other`.
+- R6 method links go to lowercase anchors on the same page, and
+  inherited methods are a list. Other `\if{html}{\out{}}` HTML is
+  dropped. A list in `\value{}` stays a list.

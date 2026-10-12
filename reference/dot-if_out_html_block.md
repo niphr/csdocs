@@ -1,15 +1,13 @@
-# Detect a block-level `\\if{html}{\out{...}}` HTML code block, if `x` is one
+# Render a block-level `\\if{html}{\out{...}}` node, if `x` is one
 
-`\\if{html}{...}` / `\\ifelse{html}{...}{...}` are usually simple inline
-conditionals (handled by
-[`.rd_inline_piece()`](https://niphr.github.io/csdocs/reference/dot-rd_inline_piece.md)),
-but roxygen2's Markdown support compiles fenced code blocks
-(```` ```r ````) into
-`\\if{html}{\out{<div class="sourceCode r">...}}` - a real multi-line
-code block authored as raw HTML passthrough, which needs block-level
-handling (a fenced Markdown code block), not inline text. This detects
-that specific shape: an `\\if`/`\\ifelse` node whose `html`-condition
-branch has an `\\out{}` node as a direct child.
+`\\if{html}{...}` and `\\ifelse{html}{...}{...}` are usually inline
+conditionals, which
+[`.rd_inline_piece()`](https://niphr.github.io/csdocs/reference/dot-rd_inline_piece.md)
+handles. roxygen2 writes R6 method anchors and the "Inherited methods"
+block as an `\\if` node whose `html` branch has an `\\out{}` node as a
+direct child.
+[`.render_rd_out_as_code()`](https://niphr.github.io/csdocs/reference/dot-render_rd_out_as_code.md)
+renders that `\\out{}` node.
 
 ## Usage
 
@@ -25,6 +23,6 @@ branch has an `\\out{}` node as a direct child.
 
 ## Value
 
-The rendered fenced code block (a string), or `NULL` if `x` isn't this
-specific shape (the caller should treat it as ordinary inline/other
-content instead).
+A Markdown string, or `NULL` when `x` is not this shape or when
+[`.render_rd_out_as_code()`](https://niphr.github.io/csdocs/reference/dot-render_rd_out_as_code.md)
+drops the HTML. The caller then treats `x` as inline content.

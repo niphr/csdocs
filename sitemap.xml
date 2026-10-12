@@ -28,6 +28,7 @@
 <url><loc>https://niphr.github.io/csdocs/reference/dot-group_index_topics.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-if_out_html_block.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-inline_code_span.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-is_blank_rd_text.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-is_source_path.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-leaf_or_list_raw_text.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-leaf_or_list_text.html</loc></url>
@@ -50,6 +51,7 @@
 <url><loc>https://niphr.github.io/csdocs/reference/dot-parse_rd_sections.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-parse_rd_topic.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-parse_rd_usage.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-rd_block_piece.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_block_renderer.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_code_link_href.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_inline_code_piece.html</loc></url>
@@ -75,6 +77,7 @@
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_aliases_line.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_arguments_section.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_author_section.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-render_block_run.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_description_section.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_details_section.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_examples_section.html</loc></url>
@@ -83,12 +86,14 @@
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_index_group.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_index_md.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_index_row.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-render_inherited_methods.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_note_section.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_private_badge.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_rd_describe.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_rd_enumerate.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_rd_figure_alt.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_rd_itemize.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-render_rd_named_item.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_rd_out_as_code.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_rd_preformatted.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-render_rd_subsection.html</loc></url>

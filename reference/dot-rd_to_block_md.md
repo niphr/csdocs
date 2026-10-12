@@ -10,7 +10,8 @@ Markdown — paragraphs, bullet/numbered lists, nested subsection
 headings, and fenced code blocks — instead of flattening everything to a
 single run of prose. Use it for `\\description{}` and `\\details{}`,
 which commonly contain `\\itemize{}`, `\\enumerate{}`,
-`\\subsection{}{}`, and `\\preformatted{}`.
+`\\subsection{}{}`, and `\\preformatted{}`. It also renders the
+top-level `\\item{name}{desc}` nodes of `\\value{}` as a list.
 
 ## Usage
 
