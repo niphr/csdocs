@@ -10,7 +10,7 @@ install.packages("csdocs", repos = c("https://niphr.r-universe.dev", "https://cl
 
 ## Usage
 
-csdocs exports two functions.
+csdocs exports three functions.
 
 `build_reference()` writes one Markdown file per topic, a `README.md` index, and `_full_reference.md`, which holds every topic in one file. The `package` argument takes the name of an installed package or the path to a source package. For a source package, csdocs reads the documentation from the source tree and does not install the package.
 
@@ -29,6 +29,12 @@ docs <- csdocs::get_documentation("dplyr")
 ```
 
 `build_reference()` includes documented internal topics by default (`include_private = TRUE`). `get_documentation()` includes only the public API by default (`include_private = FALSE`).
+
+`build_site()` writes a front page, the reference and each R Markdown vignette as GitHub Markdown. The `package` argument MUST be the path to a source package. Install the package first when a vignette calls `library()` on it.
+
+```r
+csdocs::build_site(".", output_dir = "docs-build")
+```
 
 ## Credit
 

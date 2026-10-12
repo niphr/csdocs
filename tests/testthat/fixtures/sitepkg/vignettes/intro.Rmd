@@ -1,0 +1,20 @@
+---
+title: "Introduction to sitepkg"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to sitepkg}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+The chunk below prints a sum.
+
+```{r sum}
+1 + 1
+```
+
+The chunk below draws a figure.
+
+```{r points}
+plot(1:3)
+```

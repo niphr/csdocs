@@ -1,0 +1,6 @@
+Package: sitepkg
+Title: Fixture for the Site Builder
+Version: 0.0.1
+Description: A fixture package for the csdocs build_site() tests.
+License: MIT
+Encoding: UTF-8
