@@ -17,7 +17,9 @@
 A string fragment, or \code{NULL} when \code{tag} is not one of these tags.
 }
 \description{
-Renders \verb{\\\method{generic}{class}} as \code{generic.class}, and \verb{\\\code},
-\verb{\\\command} and \verb{\\\link} as a code span. A helper of \code{\link[=.rd_inline_piece]{.rd_inline_piece()}}.
+Renders \verb{\\\method{generic}{class}} as \code{generic.class}, and \verb{\\\code} and
+\verb{\\\command} as a code span. A code span that holds one \verb{\\\link} becomes
+the text of that link, for example \verb{[`x()`](x.md)}. A helper of
+\code{\link[=.rd_inline_piece]{.rd_inline_piece()}}.
 }
 \keyword{internal}

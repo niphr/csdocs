@@ -1,0 +1,6 @@
+export(fam_a)
+export(fam_b)
+export(helper_fun)
+export(main_topic)
+export(other_topic)
+exportClasses(Thing)

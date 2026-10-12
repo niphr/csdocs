@@ -27,10 +27,10 @@ A list with fields \code{name}, \code{package}, \code{aliases}, \code{is_private
 \description{
 Converts an \code{Rd} object (from either \code{\link[tools:Rd_db]{tools::Rd_db()}} or
 \code{\link[tools:parse_Rd]{tools::parse_Rd()}}) into a flat list consumable by \code{render_md.R}.
-\code{title}/\verb{arguments[].name}/\verb{arguments[].description}/\code{value}/\code{seealso}
+\code{title}/\verb{arguments[].name}/\verb{arguments[].description}/\code{value}
 are single-line-safe text via \code{\link[=.rd_to_text]{.rd_to_text()}} (Tier 2 - table cells and
 the page title can't contain a literal newline). \code{description}/
-\code{details}/\code{format}/\code{note}/\code{source}/\code{references}/\code{author}/each section's
+\code{details}/\code{format}/\code{seealso}/\code{note}/\code{source}/\code{references}/\code{author}/each section's
 body are full multi-paragraph Markdown via \code{\link[=.rd_to_block_md]{.rd_to_block_md()}} (Tier 3),
 since they commonly contain \verb{\\\\itemize\{\}}, \verb{\\\\describe\{\}},
 \verb{\\\\subsection\{\}\{\}}, etc. that Tier 2 would flatten into unreadable prose.

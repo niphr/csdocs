@@ -131,8 +131,10 @@
 
 #' Render an inline Rd node with a code-styled tag
 #'
-#' Renders `\\method{generic}{class}` as `generic.class`, and `\\code`,
-#' `\\command` and `\\link` as a code span. A helper of [.rd_inline_piece()].
+#' Renders `\\method{generic}{class}` as `generic.class`, and `\\code` and
+#' `\\command` as a code span. A code span that holds one `\\link` becomes
+#' the text of that link, for example ``[`x()`](x.md)``. A helper of
+#' [.rd_inline_piece()].
 #'
 #' @param x A single Rd list node.
 #' @param tag The `Rd_tag` of `x`, or `""`.
@@ -143,15 +145,12 @@
   if (identical(tag, "\\method") && length(x) == 2) {
     return(paste0(.leaf_or_list_text(x[[1]]), ".", .leaf_or_list_text(x[[2]])))
   }
-  if (tag %in% c("\\code", "\\command", "\\link")) {
+  if (tag %in% c("\\code", "\\command")) {
     inner <- .rd_to_text(x, in_code = TRUE)
     if (in_code) {
       return(inner)
     }
-    # \link target resolution to real cross-file Markdown links would need
-    # the full topic index, which isn't available at this level - render
-    # as code-styled text instead of a broken/absent link.
-    return(.inline_code_span(inner))
+    return(.wrap_link(.inline_code_span(inner), .rd_code_link_href(x)))
   }
   return(NULL)
 }
@@ -182,13 +181,22 @@
 
 #' Render an inline Rd node with a link or figure tag
 #'
-#' Renders `\\href`, `\\url` and `\\figure`. A helper of
-#' [.rd_inline_piece()].
+#' Renders `\\link`, `\\linkS4class`, `\\href`, `\\url` and `\\figure`. A
+#' `\\link` to a topic of the same package becomes a relative Markdown link
+#' when a link map is active (see [.with_link_map()]), and a code span
+#' otherwise. A helper of [.rd_inline_piece()].
 #'
 #' @inheritParams .rd_inline_code_piece
 #' @return A string fragment, or `NULL` when `tag` is not one of these tags.
 #' @keywords internal
 .rd_inline_link_piece <- function(x, tag, in_code) {
+  if (tag %in% c("\\link", "\\linkS4class")) {
+    label <- .rd_to_text(x, in_code = TRUE)
+    if (in_code) {
+      return(label)
+    }
+    return(.wrap_link(.inline_code_span(label), .rd_link_href(x)))
+  }
   if (identical(tag, "\\href") && length(x) >= 2) {
     url <- .rd_to_text(x[[1]], in_code = in_code)
     label <- .rd_to_text(x[[2]], in_code = in_code)

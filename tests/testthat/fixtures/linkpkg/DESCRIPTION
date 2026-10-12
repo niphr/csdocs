@@ -1,0 +1,6 @@
+Package: linkpkg
+Title: Fixture for Links Between Topics
+Version: 0.0.1
+Description: A fixture package for the csdocs link tests.
+License: MIT
+Encoding: UTF-8

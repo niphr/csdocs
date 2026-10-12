@@ -81,11 +81,18 @@ build_reference <- function(
   metadata <- .read_package_metadata(package)
   db <- .read_rd_db(package)
   exported_names <- .read_exported_names(package)
-  topics <- .build_topics(db, metadata$name, exported_names)
-  if (!include_private) {
-    topics <- purrr::keep(topics, \(topic) !topic$is_private)
+  select_topics <- function() {
+    topics <- .build_topics(db, metadata$name, exported_names)
+    if (!include_private) {
+      topics <- purrr::keep(topics, \(topic) !topic$is_private)
+    }
+    return(topics)
   }
+  topics <- select_topics()
   .check_topic_name_collisions(topics)
+  # The topic files link to each other. The index and _full_reference.md
+  # keep code spans, so the topics are parsed a second time with links.
+  linked_topics <- .with_link_map(.alias_link_map(topics), select_topics())
 
   fs::dir_create(output_dir)
   .check_existing_output(output_dir, overwrite)
@@ -98,7 +105,7 @@ build_reference <- function(
     total = length(topics)
   )
 
-  purrr::walk(topics, \(topic) {
+  purrr::walk(linked_topics, \(topic) {
     .write_topic_file(topic, metadata$version, output_dir)
     return(cli::cli_progress_update(id = progress_id))
   })
