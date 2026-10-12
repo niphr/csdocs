@@ -20,6 +20,8 @@ A string fragment, or \code{NULL} when \code{tag} is not one of these tags.
 Renders \verb{\\\link}, \verb{\\\linkS4class}, \verb{\\\\href}, \verb{\\\url} and \verb{\\\figure}. A
 \verb{\\\link} to a topic of the same package becomes a relative Markdown link
 when a link map is active (see \code{\link[=.with_link_map]{.with_link_map()}}), and a code span
-otherwise. A helper of \code{\link[=.rd_inline_piece]{.rd_inline_piece()}}.
+otherwise. A helper of \code{\link[=.rd_inline_piece]{.rd_inline_piece()}}. An \verb{\\\\href\{#X\}} to the same
+page becomes a link to \verb{#x}, in lowercase, because GitHub lowercases the
+target \code{id} (see \code{\link[=.render_rd_out_as_code]{.render_rd_out_as_code()}}).
 }
 \keyword{internal}

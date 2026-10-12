@@ -2,7 +2,7 @@
 % Please edit documentation in R/render_rd_block.R
 \name{.render_rd_out_as_code}
 \alias{.render_rd_out_as_code}
-\title{Render an \verb{\\\out{}} node's raw HTML as a fenced Markdown code block}
+\title{Render the raw HTML of an \verb{\\\out{}} node as Markdown}
 \usage{
 .render_rd_out_as_code(out_node)
 }
@@ -10,25 +10,23 @@
 \item{out_node}{An \verb{\\\out{}} Rd node.}
 }
 \value{
-A fenced Markdown code block, or \code{NULL} if it has no content
-once HTML tags are stripped (a pure wrapper tag, not real code).
+A Markdown string, or \code{NULL} when the function drops the HTML.
 }
 \description{
-Strips HTML tags and decodes common entities rather than attempting to
-actually parse the HTML - good enough to turn e.g.
-\verb{<div class="sourceCode r">mutate(x) #&gt; result</div>} into readable
-\verb{```r mutate(x) #> result ```} , not pixel-perfect HTML rendering (which Markdown can't do
-anyway).
+The function keeps two shapes of R6 class HTML and drops all other HTML.
 }
 \details{
-roxygen2's Markdown fenced-code support compiles a single fenced block
-into \emph{three} separate top-level nodes: an opening
-\verb{\\\if{html}{\\out{<div class="sourceCode r">}}}, the actual code as a
-plain \verb{\\\preformatted{}} (portable across all output formats, already
-handled by \code{\link[=.render_rd_preformatted]{.render_rd_preformatted()}}), and a closing
-\verb{\\\if{html}{\\out{</div>}}}. The opening/closing wrapper nodes have no
-real content once their tags are stripped - returning \code{NULL} instead of
-an empty fence for those lets the caller skip them entirely rather than
-emitting spurious empty \verb{```} blocks around the real one.
+\itemize{
+\item An anchor \verb{<a id="X"></a>} becomes \verb{<a id="x"></a>} on its own line.
+The id is lowercase, because GitHub lowercases an \code{id} and does not
+change an \code{href}. \code{\link[=.rd_inline_link_piece]{.rd_inline_link_piece()}} lowercases the in-page
+\verb{\\\\href\{#X\}} fragment to match.
+\item The "Inherited methods" block becomes a Markdown list of code spans,
+with no links. See \code{\link[=.render_inherited_methods]{.render_inherited_methods()}}.
+}
+
+roxygen2 writes a fenced code block as \verb{\\\preformatted{}} between two
+\verb{\\\out{}} wrappers. \code{\link[=.render_rd_preformatted]{.render_rd_preformatted()}} renders the code, so
+the wrappers carry nothing to keep.
 }
 \keyword{internal}

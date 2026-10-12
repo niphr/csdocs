@@ -184,7 +184,9 @@
 #' Renders `\\link`, `\\linkS4class`, `\\href`, `\\url` and `\\figure`. A
 #' `\\link` to a topic of the same package becomes a relative Markdown link
 #' when a link map is active (see [.with_link_map()]), and a code span
-#' otherwise. A helper of [.rd_inline_piece()].
+#' otherwise. A helper of [.rd_inline_piece()]. An `\\href{#X}` to the same
+#' page becomes a link to `#x`, in lowercase, because GitHub lowercases the
+#' target `id` (see [.render_rd_out_as_code()]).
 #'
 #' @inheritParams .rd_inline_code_piece
 #' @return A string fragment, or `NULL` when `tag` is not one of these tags.
@@ -199,6 +201,9 @@
   }
   if (identical(tag, "\\href") && length(x) >= 2) {
     url <- .rd_to_text(x[[1]], in_code = in_code)
+    if (startsWith(url, "#")) {
+      url <- tolower(url)
+    }
     label <- .rd_to_text(x[[2]], in_code = in_code)
     return(glue::glue("[{label}]({url})"))
   }

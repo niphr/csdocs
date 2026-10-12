@@ -25,7 +25,8 @@ real multi-line Markdown — paragraphs, bullet/numbered lists, nested
 subsection headings, and fenced code blocks — instead of flattening
 everything to a single run of prose. Use it for \verb{\\\\description\{\}} and
 \verb{\\\\details\{\}}, which commonly contain \verb{\\\\itemize\{\}}, \verb{\\\\enumerate\{\}},
-\verb{\\\\subsection\{\}\{\}}, and \verb{\\\preformatted{}}.
+\verb{\\\\subsection\{\}\{\}}, and \verb{\\\preformatted{}}. It also renders the
+top-level \verb{\\\\item\{name\}\{desc\}} nodes of \verb{\\\\value\{\}} as a list.
 }
 \details{
 \code{rd} is expected to already be a plain list of block-level children

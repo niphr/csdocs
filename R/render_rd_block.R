@@ -7,7 +7,8 @@
 #' subsection headings, and fenced code blocks — instead of flattening
 #' everything to a single run of prose. Use it for `\\description{}` and
 #' `\\details{}`, which commonly contain `\\itemize{}`, `\\enumerate{}`,
-#' `\\subsection{}{}`, and `\\preformatted{}`.
+#' `\\subsection{}{}`, and `\\preformatted{}`. It also renders the
+#' top-level `\\item{name}{desc}` nodes of `\\value{}` as a list.
 #'
 #' `rd` is expected to already be a plain list of block-level children
 #' (e.g. from [.first_rd_tag_children()] or, for a `\\subsection{}{}`
@@ -26,43 +27,65 @@
     return("")
   }
 
-  segments <- list()
-  buffer <- list()
-
-  flush_buffer <- function() {
-    if (length(buffer) == 0) {
-      return(invisible(NULL))
-    }
-    text <- .normalize_block_whitespace(.rd_to_text(buffer))
-    if (nzchar(text)) {
-      segments[[length(segments) + 1]] <<- text
-    }
-    buffer <<- list()
-    return(invisible(NULL))
-  }
-
-  for (child in rd) {
-    tag <- attr(child, "Rd_tag")
-    html_block <- .if_out_html_block(child)
-    renderer <- .rd_block_renderer(tag, heading_level)
-    if (!is.null(html_block)) {
-      # \if{html}{\out{<div class="sourceCode r">...}}: a real code block
-      # authored as an HTML passthrough (the roxygen2/pkgdown markdown
-      # fenced-code pattern), not inline text - handled before the
-      # tag-name dispatch below since it's tagged "\\if", same as a
-      # plain conditional (handled inline, see .rd_inline_piece()).
-      flush_buffer()
-      segments[[length(segments) + 1]] <- html_block
-    } else if (!is.null(renderer)) {
-      flush_buffer()
-      segments[[length(segments) + 1]] <- renderer(child)
-    } else {
-      buffer[[length(buffer) + 1]] <- child
+  pieces <- lapply(rd, .rd_block_piece, heading_level = heading_level)
+  kinds <- vapply(pieces, \(piece) piece$kind, character(1))
+  # Whitespace after an \item{}{} belongs to the item list.
+  for (i in seq_along(kinds)[-1]) {
+    if (kinds[i - 1] == "item" && .is_blank_rd_text(rd[[i]])) {
+      kinds[i] <- "item"
     }
   }
-  flush_buffer()
+  starts <- c(TRUE, kinds[-1] != kinds[-length(kinds)] | kinds[-1] == "block")
+  runs <- split(seq_along(pieces), cumsum(starts))
+  segments <- lapply(runs, \(idx) .render_block_run(pieces[idx], kinds[idx[1]]))
 
-  return(paste(segments, collapse = "\n\n"))
+  return(paste(unlist(segments), collapse = "\n\n"))
+}
+
+#' Classify one Rd child of a block for [.rd_to_block_md()]
+#'
+#' @param child One Rd node.
+#' @param heading_level As in [.rd_to_block_md()].
+#' @return A list. `kind` is `"block"` or `"item"`, with the Markdown in
+#'   `md`, or `"inline"`, with the Rd node in `node`.
+#' @keywords internal
+.rd_block_piece <- function(child, heading_level) {
+  tag <- attr(child, "Rd_tag")
+  # An R6 anchor or "Inherited methods" block, see .if_out_html_block().
+  html_block <- .if_out_html_block(child)
+  if (!is.null(html_block)) {
+    return(list(kind = "block", md = html_block))
+  }
+  renderer <- .rd_block_renderer(tag, heading_level)
+  if (!is.null(renderer)) {
+    return(list(kind = "block", md = renderer(child)))
+  }
+  # \item{name}{desc} at the top level, as in \value{}.
+  if (identical(tag, "\\item") && length(child) >= 2) {
+    return(list(kind = "item", md = .render_rd_named_item(child)))
+  }
+  return(list(kind = "inline", node = child))
+}
+
+#' Render one run of pieces of the same kind
+#'
+#' @param pieces A list of pieces from [.rd_block_piece()].
+#' @param kind The `kind` of the run.
+#' @return A Markdown string, or `NULL` when an inline run has no text.
+#' @keywords internal
+.render_block_run <- function(pieces, kind) {
+  if (kind == "block") {
+    return(pieces[[1]]$md)
+  }
+  if (kind == "item") {
+    return(paste(unlist(lapply(pieces, \(piece) piece$md)), collapse = "\n"))
+  }
+  nodes <- lapply(pieces, \(piece) piece$node)
+  text <- .normalize_block_whitespace(.rd_to_text(nodes))
+  if (!nzchar(text)) {
+    return(NULL)
+  }
+  return(text)
 }
 
 #' Find the renderer for a block-level Rd tag
@@ -210,6 +233,31 @@
   return(paste(lines, collapse = "\n"))
 }
 
+#' Render one top-level `\\item{name}{desc}` node as a Markdown list item
+#'
+#' roxygen2 writes a named list in `\\value{}` as `\\item{name}{desc}`
+#' nodes with no list container around them.
+#'
+#' @param x An `\\item{}{}` Rd node with 2 children.
+#' @return One line, `` - **`name`**: desc ``.
+#' @keywords internal
+.render_rd_named_item <- function(x) {
+  name <- .collapse_whitespace(.rd_to_text(x[[1]], in_code = TRUE))
+  desc <- .collapse_whitespace(.rd_to_text(x[[2]]))
+  return(paste0("- **", .inline_code_span(name), "**: ", desc))
+}
+
+#' Test whether an Rd node is text that holds only whitespace
+#' @param x An Rd node.
+#' @return `TRUE` or `FALSE`.
+#' @keywords internal
+.is_blank_rd_text <- function(x) {
+  return(
+    identical(attr(x, "Rd_tag"), "TEXT") &&
+      !grepl("\\S", paste(as.character(x), collapse = ""))
+  )
+}
+
 #' Render a `\\subsection{title}{body}` node as a Markdown heading + body
 #'
 #' The title is collapsed to a single line via [.collapse_whitespace()] -
@@ -244,21 +292,18 @@
   return(paste0(fence, "\n", code, "\n", fence))
 }
 
-#' Detect a block-level `\\if{html}{\\out{...}}` HTML code block, if `x` is one
+#' Render a block-level `\\if{html}{\\out{...}}` node, if `x` is one
 #'
-#' `\\if{html}{...}` / `\\ifelse{html}{...}{...}` are usually simple inline
-#' conditionals (handled by [.rd_inline_piece()]), but roxygen2's Markdown
-#' support compiles fenced code blocks (` ```r `) into
-#' `\\if{html}{\\out{<div class="sourceCode r">...}}` - a real multi-line
-#' code block authored as raw HTML passthrough, which needs block-level
-#' handling (a fenced Markdown code block), not inline text. This detects
-#' that specific shape: an `\\if`/`\\ifelse` node whose `html`-condition
-#' branch has an `\\out{}` node as a direct child.
+#' `\\if{html}{...}` and `\\ifelse{html}{...}{...}` are usually inline
+#' conditionals, which [.rd_inline_piece()] handles. roxygen2 writes R6
+#' method anchors and the "Inherited methods" block as an `\\if` node whose
+#' `html` branch has an `\\out{}` node as a direct child.
+#' [.render_rd_out_as_code()] renders that `\\out{}` node.
 #'
 #' @param x An Rd node (only `\\if`/`\\ifelse`-tagged nodes can match).
-#' @return The rendered fenced code block (a string), or `NULL` if `x`
-#'   isn't this specific shape (the caller should treat it as ordinary
-#'   inline/other content instead).
+#' @return A Markdown string, or `NULL` when `x` is not this shape or when
+#'   [.render_rd_out_as_code()] drops the HTML. The caller then treats `x`
+#'   as inline content.
 #' @keywords internal
 .if_out_html_block <- function(x) {
   tag <- attr(x, "Rd_tag")
@@ -285,41 +330,70 @@
   return(.render_rd_out_as_code(out_node[[1]]))
 }
 
-#' Render an `\\out{}` node's raw HTML as a fenced Markdown code block
+#' Render the raw HTML of an `\\out{}` node as Markdown
 #'
-#' Strips HTML tags and decodes common entities rather than attempting to
-#' actually parse the HTML - good enough to turn e.g.
-#' `<div class="sourceCode r">mutate(x) #&gt; result</div>` into readable
-#' ```` ```r
-#' mutate(x) #> result
-#' ``` ```` , not pixel-perfect HTML rendering (which Markdown can't do
-#' anyway).
+#' The function keeps two shapes of R6 class HTML and drops all other HTML.
 #'
-#' roxygen2's Markdown fenced-code support compiles a single fenced block
-#' into *three* separate top-level nodes: an opening
-#' `\\if{html}{\\out{<div class="sourceCode r">}}`, the actual code as a
-#' plain `\\preformatted{}` (portable across all output formats, already
-#' handled by [.render_rd_preformatted()]), and a closing
-#' `\\if{html}{\\out{</div>}}`. The opening/closing wrapper nodes have no
-#' real content once their tags are stripped - returning `NULL` instead of
-#' an empty fence for those lets the caller skip them entirely rather than
-#' emitting spurious empty ` ``` ` blocks around the real one.
+#' - An anchor `<a id="X"></a>` becomes `<a id="x"></a>` on its own line.
+#'   The id is lowercase, because GitHub lowercases an `id` and does not
+#'   change an `href`. [.rd_inline_link_piece()] lowercases the in-page
+#'   `\\href{#X}` fragment to match.
+#' - The "Inherited methods" block becomes a Markdown list of code spans,
+#'   with no links. See [.render_inherited_methods()].
+#'
+#' roxygen2 writes a fenced code block as `\\preformatted{}` between two
+#' `\\out{}` wrappers. [.render_rd_preformatted()] renders the code, so
+#' the wrappers carry nothing to keep.
 #'
 #' @param out_node An `\\out{}` Rd node.
-#' @return A fenced Markdown code block, or `NULL` if it has no content
-#'   once HTML tags are stripped (a pure wrapper tag, not real code).
+#' @return A Markdown string, or `NULL` when the function drops the HTML.
 #' @keywords internal
 .render_rd_out_as_code <- function(out_node) {
   raw_html <- .rd_to_raw_text(out_node)
-  lang <- .detect_source_code_lang(raw_html) %||% ""
-  code <- .strip_html_tags(raw_html)
-  code <- .decode_html_entities(code)
-  code <- trimws(code)
-  if (!nzchar(code)) {
+  anchor <- regmatches(
+    raw_html,
+    regexec(
+      "^\\s*<a\\s+id\\s*=\\s*[\"']([^\"']+)[\"']\\s*>\\s*</a>\\s*$",
+      raw_html
+    )
+  )[[1]]
+  if (length(anchor) == 2) {
+    return(paste0("<a id=\"", tolower(anchor[2]), "\"></a>"))
+  }
+  return(.render_inherited_methods(raw_html))
+}
+
+#' Render the R6 "Inherited methods" HTML block as a Markdown list
+#'
+#' roxygen2 7 writes each method as a `<span>` with the attributes
+#' `data-topic="C"` and `data-id="m"`. roxygen2 8 writes `<code>C$m()</code>`.
+#' Each method becomes one list item `` `C$m()` ``. The list has no links,
+#' because the HTML links point at the HTML help pages of other packages.
+#'
+#' @param html Raw HTML string of one `\\out{}` node.
+#' @return A Markdown list, or `NULL` when `html` is not this block.
+#' @keywords internal
+.render_inherited_methods <- function(html) {
+  if (!grepl("<summary>\\s*Inherited methods\\s*</summary>", html)) {
     return(NULL)
   }
-  fence <- .code_fence(code)
-  return(paste0(fence, lang, "\n", code, "\n", fence))
+  span <- regmatches(
+    html,
+    gregexpr("data-topic=\"([^\"]+)\"\\s+data-id=\"([^\"]+)\"", html)
+  )[[1]]
+  if (length(span) > 0) {
+    topic <- sub("^data-topic=\"([^\"]+)\".*$", "\\1", span)
+    id <- sub("^.*data-id=\"([^\"]+)\"$", "\\1", span)
+    methods <- paste0(topic, "$", id, "()")
+  } else {
+    code <- regmatches(html, gregexpr("<code>[^<]*</code>", html))[[1]]
+    methods <- .decode_html_entities(.strip_html_tags(code))
+  }
+  if (length(methods) == 0) {
+    return(NULL)
+  }
+  items <- paste0("- ", vapply(methods, .inline_code_span, character(1)))
+  return(paste(c("Inherited methods:", "", items), collapse = "\n"))
 }
 
 #' Detect a `class="sourceCode <lang>"` marker in raw HTML, if present

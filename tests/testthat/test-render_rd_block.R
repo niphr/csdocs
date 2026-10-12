@@ -1,7 +1,9 @@
 .block_md <- function(details_body) {
   rd_text <- paste0(
     "\\name{my_fun}\n\\alias{my_fun}\n\\title{T}\n\\description{D}\n",
-    "\\details{\n", details_body, "\n}\n"
+    "\\details{\n",
+    details_body,
+    "\n}\n"
   )
   rd <- tools::parse_Rd(textConnection(rd_text))
   .rd_to_block_md(.first_rd_tag_children(rd, "\\details"))
@@ -13,8 +15,13 @@ test_that(".rd_to_block_md returns an empty string for NULL/empty input", {
 })
 
 test_that(".rd_to_block_md joins a hard-wrapped paragraph into flowing text", {
-  md <- .block_md("This is a long sentence that was\nhard-wrapped in the Rd source\nfor readability.")
-  expect_equal(md, "This is a long sentence that was hard-wrapped in the Rd source for readability.")
+  md <- .block_md(
+    "This is a long sentence that was\nhard-wrapped in the Rd source\nfor readability."
+  )
+  expect_equal(
+    md,
+    "This is a long sentence that was hard-wrapped in the Rd source for readability."
+  )
 })
 
 test_that(".rd_to_block_md preserves a real paragraph break as a blank line", {
@@ -23,12 +30,16 @@ test_that(".rd_to_block_md preserves a real paragraph break as a blank line", {
 })
 
 test_that(".rd_to_block_md renders \\itemize{} as a Markdown bullet list", {
-  md <- .block_md("\\itemize{\n\\item First item.\n\\item Second item with \\code{code}.\n}")
+  md <- .block_md(
+    "\\itemize{\n\\item First item.\n\\item Second item with \\code{code}.\n}"
+  )
   expect_equal(md, "- First item.\n- Second item with `code`.")
 })
 
 test_that(".rd_to_block_md renders \\enumerate{} as a Markdown numbered list", {
-  md <- .block_md("\\enumerate{\n\\item First.\n\\item Second.\n\\item Third.\n}")
+  md <- .block_md(
+    "\\enumerate{\n\\item First.\n\\item Second.\n\\item Third.\n}"
+  )
   expect_equal(md, "1. First.\n2. Second.\n3. Third.")
 })
 
@@ -47,7 +58,10 @@ test_that(".rd_to_block_md collapses a hard-wrapped \\itemize{} item onto one li
     "}"
   ))
 
-  expect_equal(md, "- First item that was wrapped across multiple lines.\n- Second item.")
+  expect_equal(
+    md,
+    "- First item that was wrapped across multiple lines.\n- Second item."
+  )
   expect_length(strsplit(md, "\n")[[1]], 2)
 })
 
@@ -58,7 +72,9 @@ test_that(".rd_to_block_md collapses a hard-wrapped \\subsection{} title onto on
 })
 
 test_that(".rd_to_block_md renders \\subsection{}{} as a heading plus recursive body", {
-  md <- .block_md("\\subsection{A Title}{\nBody text.\n\n\\itemize{\n\\item nested item\n}\n}")
+  md <- .block_md(
+    "\\subsection{A Title}{\nBody text.\n\n\\itemize{\n\\item nested item\n}\n}"
+  )
 
   expect_match(md, "^### A Title\n\n", perl = TRUE)
   expect_match(md, "Body text.", fixed = TRUE)
@@ -99,7 +115,10 @@ test_that(".split_rd_items ignores content before the first \\item marker", {
 "
   rd <- tools::parse_Rd(textConnection(rd_text))
   details <- .first_rd_tag_children(rd, "\\details")
-  itemize <- Filter(function(x) identical(attr(x, "Rd_tag"), "\\itemize"), details)[[1]]
+  itemize <- Filter(
+    function(x) identical(attr(x, "Rd_tag"), "\\itemize"),
+    details
+  )[[1]]
 
   items <- .split_rd_items(itemize)
   expect_length(items, 1)
@@ -131,7 +150,11 @@ There are two ways to group in dplyr:
   rd <- tools::parse_Rd(textConnection(rd_text))
   topic <- .parse_rd_topic(rd, "dplyr_by.Rd", "dplyr")
 
-  expect_match(topic$description, "^There are two ways to group in dplyr:", perl = TRUE)
+  expect_match(
+    topic$description,
+    "^There are two ways to group in dplyr:",
+    perl = TRUE
+  )
   expect_match(topic$description, "- Persistent grouping with `group_by\\(\\)`")
   expect_match(topic$description, "### Supported verbs")
   expect_match(topic$description, "- `mutate\\(.by = \\)`")
@@ -190,7 +213,7 @@ x #> [1] 1}\\if{html}{\\out{</div>}}
   expect_match(topic$description, "```")
 })
 
-test_that(".if_out_html_block detects and renders a real \\out{} HTML code block", {
+test_that(".if_out_html_block drops \\out{} HTML that is not an R6 anchor or method list", {
   rd_text <- "
 \\name{my_fun}
 \\alias{my_fun}
@@ -205,11 +228,9 @@ mutate(x) #&amp;gt; result
   desc <- .first_rd_tag_children(rd, "\\description")
   if_node <- Filter(function(x) identical(attr(x, "Rd_tag"), "\\if"), desc)[[1]]
 
-  block <- .if_out_html_block(if_node)
-
-  expect_match(block, "^```r\n", perl = TRUE)
-  expect_no_match(block, "<div", fixed = TRUE)
-  expect_match(block, "mutate\\(x\\)")
+  expect_null(.if_out_html_block(if_node))
+  topic <- .parse_rd_topic(rd, "my_fun.Rd", "testpkg")
+  expect_equal(topic$description, "")
 })
 
 test_that("real-world regression: an opening/closing-only \\out{} div wrapper contributes nothing", {
@@ -253,7 +274,11 @@ test_that(".detect_source_code_lang finds the sourceCode language class", {
 .tabular_md <- function(spec, body_rd) {
   rd_text <- paste0(
     "\\name{my_fun}\n\\alias{my_fun}\n\\title{T}\n\\description{D}\n",
-    "\\details{\n\\tabular{", spec, "}{\n", body_rd, "\n}\n}\n"
+    "\\details{\n\\tabular{",
+    spec,
+    "}{\n",
+    body_rd,
+    "\n}\n}\n"
   )
   rd <- tools::parse_Rd(textConnection(rd_text))
   .rd_to_block_md(.first_rd_tag_children(rd, "\\details"))
@@ -305,7 +330,9 @@ test_that(".render_rd_tabular ignores whitespace/newlines in the alignment spec"
 .describe_md <- function(body_rd) {
   rd_text <- paste0(
     "\\name{my_fun}\n\\alias{my_fun}\n\\title{T}\n\\description{D}\n",
-    "\\details{\n\\describe{\n", body_rd, "\n}\n}\n"
+    "\\details{\n\\describe{\n",
+    body_rd,
+    "\n}\n}\n"
   )
   rd <- tools::parse_Rd(textConnection(rd_text))
   .rd_to_block_md(.first_rd_tag_children(rd, "\\details"))
@@ -325,4 +352,34 @@ test_that(".rd_to_block_md's \\describe{} does not concatenate term and descript
 
   expect_no_match(md, "alphaFirst", fixed = TRUE)
   expect_match(md, "\\*\\*alpha\\*\\*: First entry\\.")
+})
+
+.value_md <- function(name) {
+  rd <- tools::parse_Rd(test_path("fixtures", "value", paste0(name, ".Rd")))
+  return(.parse_rd_topic(rd, paste0(name, ".Rd"), "testpkg")$value)
+}
+
+test_that("\\value{} renders \\item{name}{desc} entries as a Markdown list", {
+  expect_equal(
+    .value_md("value_items"),
+    paste0(
+      "A list with two elements:\n\n",
+      "- **`status`**: A string, one of `\"ok\"` or `\"error\"`.\n",
+      "- **`issues`**: A character vector of problems."
+    )
+  )
+})
+
+test_that("\\value{} renders an \\itemize{} with bare \\item as a Markdown list", {
+  lines <- strsplit(.value_md("check_environment_setup"), "\n")[[1]]
+  expect_equal(
+    lines,
+    c(
+      "A list containing environment setup status and recommendations:",
+      "",
+      "- status: \"ok\", \"warning\", or \"error\".",
+      "- issues: Character vector of identified problems.",
+      "- recommendations: Character vector of suggested fixes."
+    )
+  )
 })

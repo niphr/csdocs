@@ -2,7 +2,7 @@
 % Please edit documentation in R/render_rd_block.R
 \name{.if_out_html_block}
 \alias{.if_out_html_block}
-\title{Detect a block-level \verb{\\\if{html}{\\out{...}}} HTML code block, if \code{x} is one}
+\title{Render a block-level \verb{\\\if{html}{\\out{...}}} node, if \code{x} is one}
 \usage{
 .if_out_html_block(x)
 }
@@ -10,18 +10,15 @@
 \item{x}{An Rd node (only \verb{\\\if}/\verb{\\\ifelse}-tagged nodes can match).}
 }
 \value{
-The rendered fenced code block (a string), or \code{NULL} if \code{x}
-isn't this specific shape (the caller should treat it as ordinary
-inline/other content instead).
+A Markdown string, or \code{NULL} when \code{x} is not this shape or when
+\code{\link[=.render_rd_out_as_code]{.render_rd_out_as_code()}} drops the HTML. The caller then treats \code{x}
+as inline content.
 }
 \description{
-\verb{\\\if{html}{...}} / \verb{\\\ifelse{html}{...}{...}} are usually simple inline
-conditionals (handled by \code{\link[=.rd_inline_piece]{.rd_inline_piece()}}), but roxygen2's Markdown
-support compiles fenced code blocks (\verb{```r}) into
-\verb{\\\if{html}{\\out{<div class="sourceCode r">...}}} - a real multi-line
-code block authored as raw HTML passthrough, which needs block-level
-handling (a fenced Markdown code block), not inline text. This detects
-that specific shape: an \verb{\\\if}/\verb{\\\ifelse} node whose \code{html}-condition
-branch has an \verb{\\\out{}} node as a direct child.
+\verb{\\\if{html}{...}} and \verb{\\\ifelse{html}{...}{...}} are usually inline
+conditionals, which \code{\link[=.rd_inline_piece]{.rd_inline_piece()}} handles. roxygen2 writes R6
+method anchors and the "Inherited methods" block as an \verb{\\\if} node whose
+\code{html} branch has an \verb{\\\out{}} node as a direct child.
+\code{\link[=.render_rd_out_as_code]{.render_rd_out_as_code()}} renders that \verb{\\\out{}} node.
 }
 \keyword{internal}

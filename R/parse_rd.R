@@ -227,10 +227,10 @@
 #'
 #' Converts an `Rd` object (from either [tools::Rd_db()] or
 #' [tools::parse_Rd()]) into a flat list consumable by `render_md.R`.
-#' `title`/`arguments[].name`/`arguments[].description`/`value`
+#' `title`/`arguments[].name`/`arguments[].description`
 #' are single-line-safe text via [.rd_to_text()] (Tier 2 - table cells and
 #' the page title can't contain a literal newline). `description`/
-#' `details`/`format`/`seealso`/`note`/`source`/`references`/`author`/each section's
+#' `details`/`format`/`value`/`seealso`/`note`/`source`/`references`/`author`/each section's
 #' body are full multi-paragraph Markdown via [.rd_to_block_md()] (Tier 3),
 #' since they commonly contain `\\itemize{}`, `\\describe{}`,
 #' `\\subsection{}{}`, etc. that Tier 2 would flatten into unreadable prose.
@@ -265,7 +265,7 @@
     details = .rd_to_block_md(.first_rd_tag_children(rd, "\\details")),
     sections = .parse_rd_sections(rd),
     format = .rd_to_block_md(.first_rd_tag_children(rd, "\\format")),
-    value = .collapse_whitespace(.rd_to_text(.get_rd_tag(rd, "\\value"))),
+    value = .rd_to_block_md(.first_rd_tag_children(rd, "\\value")),
     examples = .parse_rd_examples(rd),
     seealso = .rd_to_block_md(.first_rd_tag_children(rd, "\\seealso")),
     note = .rd_to_block_md(.first_rd_tag_children(rd, "\\note")),
