@@ -1,7 +1,8 @@
 # Render an inline Rd node with a code-styled tag
 
-Renders `\\method{generic}{class}` as `generic.class`, and `\\code`,
-`\\command` and `\\link` as a code span. A helper of
+Renders `\\method{generic}{class}` as `generic.class`, and `\\code` and
+`\\command` as a code span. A code span that holds one `\\link` becomes
+the text of that link, for example `` [`x()`](x.md) ``. A helper of
 [`.rd_inline_piece()`](https://niphr.github.io/csdocs/reference/dot-rd_inline_piece.md).
 
 ## Usage

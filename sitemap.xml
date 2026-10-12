@@ -6,6 +6,7 @@
 <url><loc>https://niphr.github.io/csdocs/index.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/news/index.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/build_reference.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-alias_link_map.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-build_topics.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-callable_candidates.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-callable_names.html</loc></url>
@@ -15,9 +16,12 @@
 <url><loc>https://niphr.github.io/csdocs/reference/dot-code_fence.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-collapse_whitespace.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-compute_is_private.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-dead_link_frame.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-dead_link_kind.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-decode_html_entities.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-detect_source_code_lang.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-escape_table_pipe.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-find_dead_links.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-first_rd_tag_children.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-get_rd_tag.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-if_out_html_block.html</loc></url>
@@ -26,7 +30,13 @@
 <url><loc>https://niphr.github.io/csdocs/reference/dot-leaf_or_list_raw_text.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-leaf_or_list_text.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-leaf_rd_text.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-link_state.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-looks_callable.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-md_fragment_targets.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-md_link_destinations.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-md_relative_links.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-md_strip_code.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-md_strip_fences.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-normalize_block_whitespace.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-parse_namespace_exports.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-parse_rd_aliases.html</loc></url>
@@ -38,11 +48,14 @@
 <url><loc>https://niphr.github.io/csdocs/reference/dot-parse_rd_topic.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-parse_rd_usage.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_block_renderer.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-rd_code_link_href.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_inline_code_piece.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_inline_conditional_piece.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_inline_format_piece.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_inline_link_piece.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_inline_piece.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-rd_link_href.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-rd_link_target.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_raw_piece.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_to_block_md.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-rd_to_raw_text.html</loc></url>
@@ -50,6 +63,7 @@
 <url><loc>https://niphr.github.io/csdocs/reference/dot-read_exported_names.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-read_exported_names_installed.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-read_exported_names_source.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-read_md_lines.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-read_package_metadata.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-read_rd_db.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-read_rd_db_installed.html</loc></url>
@@ -87,6 +101,8 @@
 <url><loc>https://niphr.github.io/csdocs/reference/dot-split_rd_table_cells.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-split_rd_table_rows.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-strip_html_tags.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-with_link_map.html</loc></url>
+<url><loc>https://niphr.github.io/csdocs/reference/dot-wrap_link.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-write_full_reference_file.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-write_index_file.html</loc></url>
 <url><loc>https://niphr.github.io/csdocs/reference/dot-write_topic_file.html</loc></url>
