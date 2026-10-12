@@ -12,3 +12,7 @@
 - R6 method links go to lowercase anchors on the same page, and
   inherited methods are a list. Other `\if{html}{\out{}}` HTML is
   dropped. A list in `\value{}` stays a list.
+- New
+  [`build_site()`](https://niphr.github.io/csdocs/reference/build_site.md)
+  writes a front page, the reference and every `.Rmd` vignette as GitHub
+  Markdown.
