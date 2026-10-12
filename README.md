@@ -1,4 +1,4 @@
-# csdocs
+# csdocs <a href="https://niphr.github.io/csdocs/"><img src="man/figures/logo.png" align="right" width="120" /></a>
 
 csdocs renders the Rd documentation of an R package as plain Markdown. The output reads well on github.com and works as context for a large language model.
 
