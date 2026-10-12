@@ -242,9 +242,9 @@
 #' @param exported_names Character vector of the package's exported
 #'   names (see [.read_exported_names()]), or `NULL` if unknown. Drives
 #'   `is_private` (see [.compute_is_private()]); has no other effect.
-#' @return A list with fields `name`, `package`, `aliases`, `is_private`,
-#'   `title`, `description`, `usage`, `arguments`, `details`, `sections`,
-#'   `format`, `value`, `examples`, `seealso`, `note`, `source`,
+#' @return A list with fields `name`, `package`, `aliases`, `concepts`,
+#'   `is_private`, `title`, `description`, `usage`, `arguments`, `details`,
+#'   `sections`, `format`, `value`, `examples`, `seealso`, `note`, `source`,
 #'   `references`, `author`.
 #' @keywords internal
 .parse_rd_topic <- function(rd, rd_name, package, exported_names = NULL) {
@@ -256,6 +256,7 @@
     name = name,
     package = package,
     aliases = aliases,
+    concepts = .parse_rd_concepts(rd),
     is_private = .compute_is_private(name, aliases, usage, exported_names),
     title = .collapse_whitespace(.rd_to_text(.get_rd_tag(rd, "\\title"))),
     description = .rd_to_block_md(.first_rd_tag_children(rd, "\\description")),
@@ -325,6 +326,20 @@
 .parse_rd_aliases <- function(rd) {
   aliases <- .get_rd_tag(rd, "\\alias")
   return(purrr::map_chr(aliases, .rd_to_text))
+}
+
+#' Extract all `\\concept{}` entries of an Rd object
+#'
+#' roxygen2 writes one `\\concept{}` for each `@family` and each `@concept`.
+#'
+#' @param rd An `Rd` object.
+#' @return Character vector of concepts, possibly empty.
+#' @keywords internal
+.parse_rd_concepts <- function(rd) {
+  concepts <- .get_rd_tag(rd, "\\concept")
+  return(unname(purrr::map_chr(concepts, \(x) {
+    return(.collapse_whitespace(.rd_to_text(x)))
+  })))
 }
 
 #' Extract the `\\usage{}` block as preformatted code

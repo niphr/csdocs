@@ -110,7 +110,13 @@ build_reference <- function(
     return(cli::cli_progress_update(id = progress_id))
   })
 
-  .write_index_file(topics, metadata$name, metadata$version, output_dir)
+  .write_index_file(
+    topics,
+    metadata$name,
+    metadata$version,
+    output_dir,
+    sections = .read_pkgdown_sections(package)
+  )
   .write_full_reference_file(
     topics,
     metadata$name,
@@ -269,11 +275,13 @@ build_reference <- function(
 #' @param package Package name.
 #' @param version Package version.
 #' @param output_dir Target directory.
+#' @param sections Result of [.read_pkgdown_sections()], or `NULL`.
 #' @return Path to the written file, invisibly.
 #' @keywords internal
-.write_index_file <- function(topics, package, version, output_dir) {
+.write_index_file <- function(topics, package, version, output_dir, sections = NULL) {
   path <- fs::path(output_dir, "README.md")
-  return(.write_utf8_lines(.render_index_md(topics, package, version), path))
+  content <- .render_index_md(topics, package, version, sections)
+  return(.write_utf8_lines(content, path))
 }
 
 #' Write `_full_reference.md` (every topic in a single file)

@@ -19,9 +19,9 @@ names (see \code{\link[=.read_exported_names]{.read_exported_names()}}), or \cod
 \code{is_private} (see \code{\link[=.compute_is_private]{.compute_is_private()}}); has no other effect.}
 }
 \value{
-A list with fields \code{name}, \code{package}, \code{aliases}, \code{is_private},
-\code{title}, \code{description}, \code{usage}, \code{arguments}, \code{details}, \code{sections},
-\code{format}, \code{value}, \code{examples}, \code{seealso}, \code{note}, \code{source},
+A list with fields \code{name}, \code{package}, \code{aliases}, \code{concepts},
+\code{is_private}, \code{title}, \code{description}, \code{usage}, \code{arguments}, \code{details},
+\code{sections}, \code{format}, \code{value}, \code{examples}, \code{seealso}, \code{note}, \code{source},
 \code{references}, \code{author}.
 }
 \description{

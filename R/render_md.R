@@ -321,9 +321,11 @@
 
 #' Render the `README.md` index file for a reference output directory
 #'
-#' Each row's "Topic" cell uses the same heading identifier as the topic's
-#' own file (see [.render_topic_heading()]) - callable names get `()`,
-#' datasets/concept pages don't - plus the same `_(private)_` marker (see
+#' The index groups the topics under `##` headings (see
+#' [.group_index_topics()]), with one table per group. Each row's "Topic"
+#' cell uses the same heading identifier as the topic's own file (see
+#' [.render_topic_heading()]) - callable names get `()`, datasets/concept
+#' pages don't - plus the same `_(private)_` marker (see
 #' [.render_private_badge()]) if applicable. Aliases beyond that (e.g.
 #' `lag()` alongside a `lead-lag` topic named after both) get their own
 #' column so they stay findable even though they don't have their own
@@ -335,36 +337,63 @@
 #' @param topics List of parsed topic lists.
 #' @param package Package name.
 #' @param version Package version.
+#' @param sections Result of [.read_pkgdown_sections()], or `NULL` to
+#'   group by `\concept`.
 #' @return A single Markdown string (contents of `README.md`).
 #' @keywords internal
-.render_index_md <- function(topics, package, version) {
-  rows <- purrr::map_chr(topics, \(topic) {
-    file <- paste0(.safe_filename(topic$name), ".md")
-    heading <- .render_topic_heading(topic)
-    badge <- .render_private_badge(topic)
-    extra <- setdiff(
-      topic$aliases %||% character(0),
-      c(topic$name, .callable_names(topic))
-    )
-    aliases <- if (length(extra) == 0) {
-      ""
-    } else {
-      .escape_table_pipe(paste(
-        purrr::map_chr(extra, .inline_code_span),
-        collapse = ", "
-      ))
-    }
-    title <- .escape_table_pipe(topic$title)
-    return(glue::glue("| [{heading}]({file}){badge} | {title} | {aliases} |"))
-  })
+.render_index_md <- function(topics, package, version, sections = NULL) {
+  groups <- .group_index_topics(topics, sections)
+  body <- purrr::map_chr(groups, .render_index_group)
 
   return(glue::glue(
     "# {package} \u2014 Reference\n\n",
     "**Version:** {version}\n\n",
     "Full context for LLMs: [`_full_reference.md`](_full_reference.md)\n\n",
-    "| Topic | Description | Aliases |\n",
-    "|-------|-------------|---------|\n",
-    "{paste(rows, collapse = '\n')}\n",
+    "{paste(body, collapse = '\n')}",
     .trim = FALSE
   ))
+}
+
+#' Render one group of the index: heading, optional description, table
+#'
+#' @param group A `list(title, desc, topics)` from [.group_index_topics()].
+#' @return A single Markdown string.
+#' @keywords internal
+.render_index_group <- function(group) {
+  rows <- purrr::map_chr(group$topics, .render_index_row)
+  desc <- if (nzchar(group$desc)) paste0(group$desc, "\n\n") else ""
+  return(paste0(
+    "## ", group$title, "\n\n",
+    desc,
+    "| Topic | Description | Aliases |\n",
+    "|-------|-------------|---------|\n",
+    paste(rows, collapse = "\n"), "\n"
+  ))
+}
+
+#' Render one table row of the index
+#'
+#' @param topic A parsed topic list.
+#' @return A single Markdown string.
+#' @keywords internal
+.render_index_row <- function(topic) {
+  file <- paste0(.safe_filename(topic$name), ".md")
+  heading <- .render_topic_heading(topic)
+  badge <- .render_private_badge(topic)
+  extra <- setdiff(
+    topic$aliases %||% character(0),
+    c(topic$name, .callable_names(topic))
+  )
+  aliases <- if (length(extra) == 0) {
+    ""
+  } else {
+    .escape_table_pipe(paste(
+      purrr::map_chr(extra, .inline_code_span),
+      collapse = ", "
+    ))
+  }
+  title <- .escape_table_pipe(topic$title)
+  return(as.character(glue::glue(
+    "| [{heading}]({file}){badge} | {title} | {aliases} |"
+  )))
 }

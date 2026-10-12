@@ -1,0 +1,21 @@
+reference:
+- title: "Setup"
+  desc: "Functions that start a session"
+  contents:
+  - setup_run
+  - private_fun
+  - starts_with("load_")
+
+- subtitle: "A subtitle without a title gives no heading"
+
+- title: "Readers"
+  contents:
+  - ends_with("_reader")
+  - matches("^parse_")
+  - alias_x
+
+- title: "Overlap"
+  contents:
+  - load_data
+  - overlap_only
+  - has_concept("Beta family")

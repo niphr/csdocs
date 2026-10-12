@@ -1,0 +1,6 @@
+Package: indexpkg
+Title: Fixture for the Grouped Index
+Version: 0.0.1
+Description: A fixture package for the csdocs index tests.
+License: MIT
+Encoding: UTF-8

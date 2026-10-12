@@ -4,7 +4,7 @@
 \alias{.render_index_md}
 \title{Render the \code{README.md} index file for a reference output directory}
 \usage{
-.render_index_md(topics, package, version)
+.render_index_md(topics, package, version, sections = NULL)
 }
 \arguments{
 \item{topics}{List of parsed topic lists.}
@@ -12,14 +12,19 @@
 \item{package}{Package name.}
 
 \item{version}{Package version.}
+
+\item{sections}{Result of \code{\link[=.read_pkgdown_sections]{.read_pkgdown_sections()}}, or \code{NULL} to
+group by \verb{\\concept}.}
 }
 \value{
 A single Markdown string (contents of \code{README.md}).
 }
 \description{
-Each row's "Topic" cell uses the same heading identifier as the topic's
-own file (see \code{\link[=.render_topic_heading]{.render_topic_heading()}}) - callable names get \verb{()},
-datasets/concept pages don't - plus the same \verb{_(private)_} marker (see
+The index groups the topics under \verb{##} headings (see
+\code{\link[=.group_index_topics]{.group_index_topics()}}), with one table per group. Each row's "Topic"
+cell uses the same heading identifier as the topic's own file (see
+\code{\link[=.render_topic_heading]{.render_topic_heading()}}) - callable names get \verb{()}, datasets/concept
+pages don't - plus the same \verb{_(private)_} marker (see
 \code{\link[=.render_private_badge]{.render_private_badge()}}) if applicable. Aliases beyond that (e.g.
 \code{lag()} alongside a \code{lead-lag} topic named after both) get their own
 column so they stay findable even though they don't have their own

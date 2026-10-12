@@ -4,7 +4,7 @@
 \alias{.write_index_file}
 \title{Write the \code{README.md} index file}
 \usage{
-.write_index_file(topics, package, version, output_dir)
+.write_index_file(topics, package, version, output_dir, sections = NULL)
 }
 \arguments{
 \item{topics}{List of parsed topic lists.}
@@ -14,6 +14,8 @@
 \item{version}{Package version.}
 
 \item{output_dir}{Target directory.}
+
+\item{sections}{Result of \code{\link[=.read_pkgdown_sections]{.read_pkgdown_sections()}}, or \code{NULL}.}
 }
 \value{
 Path to the written file, invisibly.
