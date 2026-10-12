@@ -1,0 +1,24 @@
+# Escape literal pipe characters for use in a GFM table cell
+
+A raw `|` inside a table cell terminates the cell early and shifts every
+column after it - breaks the whole row (and often the rows after it, if
+the shift produces an odd number of remaining `|`s). Rd prose can
+contain a literal `|` (e.g. documenting an OR condition or `\\tabular{}`
+cell content), so cell-rendering call sites must escape it before
+interpolating into a `| cell | cell |` row.
+
+## Usage
+
+``` r
+.escape_table_pipe(text)
+```
+
+## Arguments
+
+- text:
+
+  A string destined for a table cell.
+
+## Value
+
+`text` with every `|` replaced by `\\|`.

@@ -1,0 +1,54 @@
+# Determine which of a topic's name/aliases actually look callable
+
+A name/alias "looks callable" if it appears followed by `(` in the
+topic's `\\usage{}` text - e.g. `mutate.Rd` has usage
+`mutate(.data, ...)`, so `"mutate"` qualifies. Infix operators (e.g.
+`%||%`, `%>%`) are never followed by `(` in `\\usage{}` - they're
+invoked as `x %op% y`, not `%op%(x, y)` - so they get a second check: an
+operator-shaped name (`^%.+%$`) qualifies if it appears anywhere in a
+non-empty usage, which is safe precisely because that syntax is
+unambiguous (never a dataset or concept-page name). Datasets and concept
+pages (`\\usage{}` is just a bare name, or empty) never qualify either
+way. A single Rd topic can document several callables at once (e.g.
+`lead-lag.Rd` documents both `lead()` and
+[`lag()`](https://rdrr.io/r/stats/lag.html), with topic name
+`"lead-lag"` matching neither) - hence this returns a vector, not a
+single yes/no. Fixed-string matching (not regex) is used for the `name(`
+check deliberately: Rd names can contain regex metacharacters (`%>%`,
+`[<-`, ...).
+
+## Usage
+
+``` r
+.callable_candidates(name, aliases, usage)
+```
+
+## Arguments
+
+- name:
+
+  Topic name.
+
+- aliases:
+
+  Character vector of the topic's aliases (possibly empty).
+
+- usage:
+
+  The topic's `\\usage{}` text (possibly `""`).
+
+## Value
+
+Character vector of callable names (possibly empty).
+
+## Details
+
+Shared by
+[`.render_topic_heading()`](https://niphr.github.io/csdocs/reference/dot-render_topic_heading.md)
+in `render_md.R` (decides whether to append `()` to the heading) and
+[`.compute_is_private()`](https://niphr.github.io/csdocs/reference/dot-compute_is_private.md)
+in `parse_rd.R` (a topic whose usage is a bare name - a dataset - is
+never flagged private just because datasets aren't in `NAMESPACE`'s
+`export()` list the way functions are; an operator, unlike a dataset,
+still needs to be checkable against `NAMESPACE`, which is exactly what
+this second branch enables).
