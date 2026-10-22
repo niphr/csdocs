@@ -23,7 +23,10 @@
 # never shadow the packages of a normal R session.
 
 Sys.setenv(
-  GATE_LIB = file.path(tools::R_user_dir("csdocs", "cache"), "static-checks-library"),
+  GATE_LIB = file.path(
+    tools::R_user_dir("csdocs", "cache"),
+    "static-checks-library"
+  ),
   CODE_FILES = tempfile("code-files-", fileext = ".txt"),
   MAX_LOC = "1000",
   LOC_ALLOWLIST = "",
@@ -152,7 +155,8 @@ install_step <- function() {
   }
   cat(
     "Gate packages: ",
-    paste0(names(got), " ", got, collapse = ", "), "\n",
+    paste0(names(got), " ", got, collapse = ", "),
+    "\n",
     sep = ""
   )
 }
@@ -166,12 +170,16 @@ select_step <- function() {
 
   # Fail loudly if a future R adds a sixth, rather than check fewer
   # files than R loads.
-  if (exists(".make_file_exts", envir = asNamespace("tools"), inherits = FALSE)) {
+  if (
+    exists(".make_file_exts", envir = asNamespace("tools"), inherits = FALSE)
+  ) {
     r_exts <- tools:::.make_file_exts("code")
     if (!setequal(r_exts, code_exts)) {
       stop(
-        "R collates these code extensions: ", paste(r_exts, collapse = " "),
-        "\nThis gate checks: ", paste(code_exts, collapse = " "),
+        "R collates these code extensions: ",
+        paste(r_exts, collapse = " "),
+        "\nThis gate checks: ",
+        paste(code_exts, collapse = " "),
         "\nUpdate code_exts in the workflow.",
         call. = FALSE
       )
@@ -229,7 +237,10 @@ loc_step <- function() {
   # stops on it, so reaching here empty means the list did not survive
   # to this step.
   if (length(files) == 0) {
-    stop("The code file list is empty, so this gate checked nothing.", call. = FALSE)
+    stop(
+      "The code file list is empty, so this gate checked nothing.",
+      call. = FALSE
+    )
   }
   max_loc <- suppressWarnings(as.numeric(Sys.getenv("MAX_LOC")))
   if (is.na(max_loc)) {
@@ -260,7 +271,9 @@ loc_step <- function() {
   over <- counts[counts > max_loc & !names(counts) %in% allowlist]
   if (length(over) > 0) {
     stop(
-      "These files hold more than ", max_loc, " code lines:\n",
+      "These files hold more than ",
+      max_loc,
+      " code lines:\n",
       paste0("  ", names(over), " (", over, ")", collapse = "\n"),
       "\nSplit them, or add them to loc-allowlist.",
       call. = FALSE
@@ -268,8 +281,13 @@ loc_step <- function() {
   }
 
   cat(
-    "Checked ", length(files), " files against a limit of ", max_loc,
-    ". The maximum is ", max(counts), ".\n",
+    "Checked ",
+    length(files),
+    " files against a limit of ",
+    max_loc,
+    ". The maximum is ",
+    max(counts),
+    ".\n",
     sep = ""
   )
 }
@@ -279,7 +297,10 @@ lint_step <- function() {
   .libPaths(c(Sys.getenv("GATE_LIB"), .libPaths()))
   files <- readLines(Sys.getenv("CODE_FILES"))
   if (length(files) == 0) {
-    stop("The code file list is empty, so this gate checked nothing.", call. = FALSE)
+    stop(
+      "The code file list is empty, so this gate checked nothing.",
+      call. = FALSE
+    )
   }
 
   max_cyclocomp <- suppressWarnings(as.integer(Sys.getenv("MAX_CYCLOCOMP")))
@@ -328,23 +349,26 @@ lint_step <- function() {
   # parse_settings = FALSE, so a .lintr file inside a package cannot
   # weaken the shared gate. Exemptions go through lint-allowlist, which
   # this step checks for staleness.
-  found <- do.call(rbind, lapply(files, function(f) {
-    l <- lintr::lint(f, linters = linters, parse_settings = FALSE)
-    if (length(l) == 0) {
-      return(NULL)
-    }
-    # Carry the path from the selection list, not lintr's own
-    # filename. lintr returns an absolute path, and lint-allowlist
-    # entries are repo-relative, so matching on lintr's path would
-    # make every allowlist entry look unused.
-    data.frame(
-      file = f,
-      line = vapply(l, function(x) x$line_number, integer(1)),
-      linter = vapply(l, function(x) x$linter, character(1)),
-      message = vapply(l, function(x) x$message, character(1)),
-      stringsAsFactors = FALSE
-    )
-  }))
+  found <- do.call(
+    rbind,
+    lapply(files, function(f) {
+      l <- lintr::lint(f, linters = linters, parse_settings = FALSE)
+      if (length(l) == 0) {
+        return(NULL)
+      }
+      # Carry the path from the selection list, not lintr's own
+      # filename. lintr returns an absolute path, and lint-allowlist
+      # entries are repo-relative, so matching on lintr's path would
+      # make every allowlist entry look unused.
+      data.frame(
+        file = f,
+        line = vapply(l, function(x) x$line_number, integer(1)),
+        linter = vapply(l, function(x) x$linter, character(1)),
+        message = vapply(l, function(x) x$message, character(1)),
+        stringsAsFactors = FALSE
+      )
+    })
+  )
   if (is.null(found)) {
     found <- data.frame(
       file = character(),
@@ -406,19 +430,29 @@ lint_step <- function() {
     writeLines(c(
       "These lints must be fixed:",
       paste0(
-        "  ", over$file, ":", over$line, "  ",
-        over$linter, "  ", over$message
+        "  ",
+        over$file,
+        ":",
+        over$line,
+        "  ",
+        over$linter,
+        "  ",
+        over$message
       )
     ))
     stop(
-      nrow(over), " lints must be fixed. The list is above.",
+      nrow(over),
+      " lints must be fixed. The list is above.",
       "\nFix them, or add <path>:<linter> to lint-allowlist.",
       call. = FALSE
     )
   }
 
   cat(
-    "Linted ", length(files), " files with ", length(linters),
+    "Linted ",
+    length(files),
+    " files with ",
+    length(linters),
     " linters. No findings.\n",
     sep = ""
   )
