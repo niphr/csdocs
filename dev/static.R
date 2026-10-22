@@ -398,14 +398,20 @@ lint_step <- function() {
   over <- found[!key %in% allowlist, , drop = FALSE]
   # dev/static.R only: record the count for the LINTS line.
   gate$lints <- nrow(over)
+  # Print the lints, then stop with a short message. stop() cuts its
+  # message at getOption("warning.length"), which is 1000 bytes by
+  # default and 8170 at most. A run with 106 lints ended mid-line and
+  # hid the rest.
   if (nrow(over) > 0) {
-    stop(
-      "These lints must be fixed:\n",
+    writeLines(c(
+      "These lints must be fixed:",
       paste0(
         "  ", over$file, ":", over$line, "  ",
-        over$linter, "  ", over$message,
-        collapse = "\n"
-      ),
+        over$linter, "  ", over$message
+      )
+    ))
+    stop(
+      nrow(over), " lints must be fixed. The list is above.",
       "\nFix them, or add <path>:<linter> to lint-allowlist.",
       call. = FALSE
     )

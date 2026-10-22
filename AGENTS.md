@@ -5,11 +5,14 @@ csdocs is a fork of [pkgmd](https://github.com/peterczerner/pkgmd) at commit `61
 ## Where the code lives
 
 - `R/build_reference.R`: the two exported functions, `build_reference()` and `get_documentation()`, and the functions that write the output files.
+- `R/build_site.R`: the exported `build_site()`, which builds a whole site: reference pages and rendered vignettes.
+- `R/links.R`: resolves Rd links to Markdown hrefs, and finds dead links in a built site.
+- `R/pkgdown_sections.R`: reads the reference sections from `_pkgdown.yml` and groups the index by them.
 - `R/parse_rd.R`: reads the Rd database of an installed package or a source package, and parses each topic.
 - `R/render_md.R`: renders one parsed topic, and the index, as Markdown.
 - `R/render_rd_block.R`: renders block-level Rd, for example lists, subsections, tables and code blocks.
 - `R/utils.R`: inline Rd text extraction and small helpers.
-- `tests/testthat/`: one test file for each of the five files in `R/`.
+- `tests/testthat/`: one test file for each file in `R/`, except `pkgdown_sections.R`, which `test-index.R` covers, plus `test-r6.R`.
 
 ## Checks
 
