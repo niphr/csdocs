@@ -1,3 +1,8 @@
+# Version 2026.10.22
+
+- Removed the unused internal helper `.detect_source_code_lang()`.
+- The internal helpers of `build_site()` have `man/dot-*.Rd` pages, like every other internal helper.
+
 # Version 2026.10.12
 
 - Forked from pkgmd `61e52b1` and renamed to csdocs.

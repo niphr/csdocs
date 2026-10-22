@@ -396,21 +396,6 @@
   return(paste(c("Inherited methods:", "", items), collapse = "\n"))
 }
 
-#' Detect a `class="sourceCode <lang>"` marker in raw HTML, if present
-#' @param html Raw HTML string.
-#' @return The language string (e.g. `"r"`), or `NULL` if not found.
-#' @keywords internal
-.detect_source_code_lang <- function(html) {
-  match <- regmatches(
-    html,
-    regexec('class="sourceCode\\s+([a-zA-Z0-9_+-]+)"', html, perl = TRUE)
-  )[[1]]
-  if (length(match) < 2) {
-    return(NULL)
-  }
-  return(match[2])
-}
-
 #' Strip HTML tags from a string
 #' @param html Raw HTML string.
 #' @return `html` with every `<...>` tag removed.

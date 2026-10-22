@@ -266,11 +266,6 @@ test_that(".decode_html_entities decodes common entities, &amp; last", {
   expect_equal(.decode_html_entities("&quot;q&quot; &#39;s&#39;"), "\"q\" 's'")
 })
 
-test_that(".detect_source_code_lang finds the sourceCode language class", {
-  expect_equal(.detect_source_code_lang('<div class="sourceCode r">'), "r")
-  expect_null(.detect_source_code_lang('<div class="other">'))
-})
-
 .tabular_md <- function(spec, body_rd) {
   rd_text <- paste0(
     "\\name{my_fun}\n\\alias{my_fun}\n\\title{T}\n\\description{D}\n",

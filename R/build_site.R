@@ -87,7 +87,6 @@ build_site <- function(package = ".", output_dir, overwrite = TRUE) {
 #' @param package As passed to [build_site()].
 #' @return `NULL`, invisibly. Aborts via `cli::cli_abort()` if needed.
 #' @keywords internal
-#' @noRd
 .check_site_source <- function(package) {
   if (!.is_source_path(package)) {
     cli::cli_abort(c(
@@ -104,7 +103,6 @@ build_site <- function(package = ".", output_dir, overwrite = TRUE) {
 #' @param ext File extension without the dot, for example `"Rmd"`.
 #' @return A character vector of file names, without the folder.
 #' @keywords internal
-#' @noRd
 .list_vignettes <- function(package, ext) {
   dir <- fs::path(package, "vignettes")
   if (!fs::dir_exists(dir)) {
@@ -117,7 +115,6 @@ build_site <- function(package = ".", output_dir, overwrite = TRUE) {
 #' @param rmd File names of the `.Rmd` vignettes.
 #' @return `NULL`, invisibly. Aborts via `cli::cli_abort()` if needed.
 #' @keywords internal
-#' @noRd
 .check_render_packages <- function(rmd) {
   if (length(rmd) == 0) {
     return(invisible(NULL))
@@ -140,7 +137,6 @@ build_site <- function(package = ".", output_dir, overwrite = TRUE) {
 #' @param overwrite As passed to [build_site()].
 #' @return `NULL`, invisibly. Aborts via `cli::cli_abort()` if needed.
 #' @keywords internal
-#' @noRd
 .prepare_site_dir <- function(output_dir, overwrite) {
   if (!overwrite) {
     existing <- fs::dir_ls(output_dir, all = TRUE)
@@ -166,7 +162,6 @@ build_site <- function(package = ".", output_dir, overwrite = TRUE) {
 #' @return A character vector of article titles, named by the relative path
 #'   of the `.md` file from `output_dir`.
 #' @keywords internal
-#' @noRd
 .render_articles <- function(package, output_dir) {
   source_dir <- fs::path(package, "vignettes")
   if (!fs::dir_exists(source_dir)) {
@@ -204,7 +199,6 @@ build_site <- function(package = ".", output_dir, overwrite = TRUE) {
 #' @param path Path to the copied `.Rmd` file.
 #' @return The title of the article.
 #' @keywords internal
-#' @noRd
 .render_article <- function(path) {
   rmarkdown::render(
     path,
@@ -227,7 +221,6 @@ build_site <- function(package = ".", output_dir, overwrite = TRUE) {
 #' @param package Path to a package source directory.
 #' @return The full commit hash, or `NULL` when no source gives one.
 #' @keywords internal
-#' @noRd
 .site_commit <- function(package) {
   sha <- Sys.getenv("GITHUB_SHA")
   if (!nzchar(sha)) {
@@ -259,7 +252,6 @@ build_site <- function(package = ".", output_dir, overwrite = TRUE) {
 #'   file, as from `.render_articles()`.
 #' @return A character vector of Markdown lines.
 #' @keywords internal
-#' @noRd
 .render_site_index_md <- function(package, version, commit, titles) {
   lines <- c(paste0("# ", package, " ", version), "")
   if (!is.null(commit)) {

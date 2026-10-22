@@ -1,6 +1,6 @@
 Package: csdocs
 Title: Markdown Reference and Site Documentation for R Packages
-Version: 2026.10.12
+Version: 2026.10.22
 Authors@R: c(
     person(
       given = c("Richard", "Aubrey"),
